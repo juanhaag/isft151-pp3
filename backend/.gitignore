@@ -1,0 +1,5 @@
+node_modules
+.env
+CLAUDE.md
+FIX-FETCH-FAILED.md
+ZONE-POSTGIS-README.md

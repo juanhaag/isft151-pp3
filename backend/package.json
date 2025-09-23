@@ -1,0 +1,35 @@
+{
+  "name": "surf-report-api",
+  "version": "1.0.0",
+  "description": "API for generating surf reports using external APIs and AI",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "db:seed": "ts-node src/scripts/seedData.ts",
+    "db:sync": "ts-node -e \"import('./src/config/database').then(db => db.initializeDatabase())\"",
+    "db:init": "npm run db:sync && npm run db:seed",
+    "db:add-zone-location": "ts-node src/scripts/addZoneLocation.ts",
+    "db:create-postgis-functions": "ts-node src/scripts/createPostGISFunctions.ts"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "pg": "^8.11.3",
+    "reflect-metadata": "^0.1.13",
+    "typeorm": "^0.3.17"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.8.0",
+    "@types/pg": "^8.10.7",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.2.2"
+  }
+}
