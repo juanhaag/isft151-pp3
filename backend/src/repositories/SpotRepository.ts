@@ -3,7 +3,7 @@ import { Spot } from '../entities';
 import AppDataSource from '../config/database';
 
 export interface ISpotRepository {
-  create(spotData: Omit<Spot, 'created_at' | 'updated_at' | 'zone' | 'reports' | 'latitude' | 'longitude' | 'setLocationFromCoordinates'>): Promise<Spot>;
+  create(spotData: Omit<Spot, 'created_at' | 'updated_at' | 'zone' | 'reports' | 'setLocationFromCoordinates'>): Promise<Spot>;
   findById(placeId: string): Promise<Spot | null>;
   findAll(): Promise<Spot[]>;
   findByZone(zonaId: number): Promise<Spot[]>;
@@ -18,13 +18,13 @@ export class SpotRepository implements ISpotRepository {
     this.repository = AppDataSource.getRepository(Spot);
   }
 
-  async create(spotData: Omit<Spot, 'created_at' | 'updated_at' | 'zone' | 'reports' | 'latitude' | 'longitude' | 'setLocationFromCoordinates'>): Promise<Spot> {
+  async create(spotData: Omit<Spot, 'created_at' | 'updated_at' | 'zone' | 'reports' | 'setLocationFromCoordinates'>): Promise<Spot> {
     try {
       // Use raw query for geometry insertion to avoid TypeORM geometry issues
       console.log('spotData:', spotData);
       
       // Construct WKT POINT from lat/lon
-      const wktPoint = `POINT(${spotData.lon} ${spotData.lat})`;
+    const wktPoint = `POINT(${spotData.longitude} ${spotData.latitude})`;
 
       const result = await this.repository.query(`
         INSERT INTO spots (place_id, location, display_name, zona, zona_id)

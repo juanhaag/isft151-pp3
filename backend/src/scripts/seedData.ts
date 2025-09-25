@@ -105,7 +105,9 @@ async function seedDatabase() {
           location: `POINT(${spotData.longitude} ${spotData.latitude})`,
           display_name: spotData.display_name,
           zona: spotData.zona,
-          zona_id: spotData.zona_id
+          zona_id: spotData.zona_id,
+          latitude: spotData.latitude,
+          longitude: spotData.longitude
         };
 
         const spot = await spotRepository.create(spotToCreate);
@@ -169,11 +171,13 @@ export async function createExampleData() {
 
     // Crear spot de ejemplo
     const newSpot = await spotRepository.create({
-      place_id: 'example_spot',
-      location: 'POINT(-56.7 -37.8)',
-      display_name: 'Playa Ejemplo, Costa Atlántica',
-      zona: 'Costa Atlántica',
-      zona_id: newZone.id
+  place_id: 'example_spot',
+  location: 'POINT(-56.7 -37.8)',
+  display_name: 'Playa Ejemplo, Costa Atlántica',
+  zona: 'Costa Atlántica',
+  zona_id: newZone.id,
+  latitude: -37.8,
+  longitude: -56.7
     });
 
     console.log(`✅ Created example spot: ${newSpot.display_name}`);
