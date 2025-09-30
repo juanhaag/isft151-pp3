@@ -36,6 +36,16 @@ CREATE TABLE IF NOT EXISTS reports (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create User table with PostGIS geometry
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    phone VARCHAR(20),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_spots_location ON spots USING GIST (location);
 CREATE INDEX IF NOT EXISTS idx_zones_location ON zones USING GIST (location);
@@ -43,7 +53,9 @@ CREATE INDEX IF NOT EXISTS idx_spots_zona_id ON spots (zona_id);
 CREATE INDEX IF NOT EXISTS idx_reports_spot_id ON reports (spot_id);
 CREATE INDEX IF NOT EXISTS idx_reports_created_at ON reports (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_zones_best_conditions ON zones USING GIN (best_conditions);
-
+-- Optional: indexes for faster lookups for User Table  
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 -- Insert sample zone data
 INSERT INTO zones (id, name, latitude, longitude, location, best_conditions) VALUES
 (1, 'Zona Sur/Mar del Plata', -38.0055, -57.5426, ST_GeomFromText('POINT(-57.5426 -38.0055)', 4326), '{
