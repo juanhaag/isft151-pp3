@@ -62,7 +62,20 @@ PORT=3000
 ```bash
 npm run db:init
 ```
+# Ejecutar migraciones pendientes
+npm run migration:run
 
+# Revertir última migración
+npm run migration:revert
+
+# Ver estado de migraciones
+npm run migration:show
+
+# Generar migración automática desde entidades
+npm run migration:generate -- src/migrations/NombreMigracion
+
+# Crear migración vacía
+npm run migration:create -- src/migrations/NombreMigracion
 ## Scripts Disponibles
 
 - `npm run dev` - Ejecutar en modo desarrollo con hot reload

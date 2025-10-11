@@ -175,10 +175,19 @@ export class ZoneRepository implements IZoneRepository {
         return null;
       }
 
-      // Set both the geometry and individual lat/lon fields
-      zone.setLocationFromCoordinates(longitude, latitude);
-      
-      const updatedZone = await this.repository.save(zone);
+      // Update using raw query to properly handle PostGIS geometry
+      await this.repository.query(
+        `UPDATE zones
+         SET location = ST_SetSRID(ST_MakePoint($1, $2), 4326),
+             latitude = $2,
+             longitude = $1,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = $3`,
+        [longitude, latitude, id]
+      );
+
+      // Fetch and return the updated zone
+      const updatedZone = await this.repository.findOneBy({ id });
       return updatedZone;
     } catch (error) {
       console.error('Error setting zone location:', error);

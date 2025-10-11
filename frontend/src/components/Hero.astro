@@ -1,0 +1,67 @@
+---
+import { Waves, Brain, MapPin, Calendar } from 'lucide-astro';
+---
+
+<section id="inicio" class="py-20 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center space-y-8">
+      <div class="space-y-4">
+        <h2 class="text-5xl md:text-6xl font-bold text-gray-900">
+          Reportes de Surf
+          <span class="text-blue-600">Inteligentes</span>
+        </h2>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+          Genera reportes personalizados de condiciones de surf usando inteligencia artificial
+          y datos meteorológicos en tiempo real.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
+        <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow">
+          <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <MapPin class="h-8 w-8 text-blue-600" />
+          </div>
+          <h3 class="text-xl font-semibold mb-4">Selecciona tu Spot</h3>
+          <p class="text-gray-600">
+            Busca y selecciona cualquier playa o spot de surf para obtener
+            condiciones específicas del lugar.
+          </p>
+        </div>
+
+        <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow">
+          <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Calendar class="h-8 w-8 text-green-600" />
+          </div>
+          <h3 class="text-xl font-semibold mb-4">Elige la Fecha</h3>
+          <p class="text-gray-600">
+            Selecciona el día para el que necesitas el reporte de condiciones
+            y planifica tu sesión perfecta.
+          </p>
+        </div>
+
+        <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow">
+          <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Brain class="h-8 w-8 text-purple-600" />
+          </div>
+          <h3 class="text-xl font-semibold mb-4">IA Analiza</h3>
+          <p class="text-gray-600">
+            Nuestra inteligencia artificial procesa datos meteorológicos y
+            genera un reporte detallado y personalizado.
+          </p>
+        </div>
+      </div>
+
+      <div class="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl p-8 text-white mt-16">
+        <div class="flex items-center justify-center space-x-3 mb-4">
+          <Waves class="h-10 w-10" />
+          <h3 class="text-2xl font-bold">¿Cómo funciona?</h3>
+        </div>
+        <p class="text-lg text-blue-100 max-w-4xl mx-auto">
+          OlasApp combina datos meteorológicos de múltiples fuentes, información de mareas,
+          viento y oleaje para crear reportes precisos. Nuestra IA analiza estos datos y
+          los presenta de forma clara y útil para que tomes la mejor decisión sobre cuándo y dónde surfear.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>

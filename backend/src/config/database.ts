@@ -12,11 +12,12 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME || 'postgres',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_DATABASE || 'surfdb',
-  synchronize: process.env.NODE_ENV !== 'production', // Solo en desarrollo
+  synchronize: false, // Deshabilitado - usar migraciones en su lugar
   logging: process.env.NODE_ENV === 'development',
   entities: [Zone, Spot, Report, User],
-  migrations: ['src/migrations/*.ts'],
-  subscribers: ['src/subscribers/*.ts'],
+  migrations: [__dirname + '/../migrations/*.ts'],
+  migrationsTableName: 'migrations',
+  migrationsRun: false, 
 });
 
 export const initializeDatabase = async (): Promise<void> => {

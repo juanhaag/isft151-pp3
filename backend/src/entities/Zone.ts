@@ -20,7 +20,21 @@ export class Zone {
     type: 'geometry',
     spatialFeatureType: 'Point',
     srid: 4326,
-    nullable: true
+    nullable: true,
+    transformer: {
+      to: (value: any) => {
+        if (!value) return null;
+        // Si ya es WKT (Well-Known Text), retornarlo directamente
+        if (typeof value === 'string' && value.startsWith('POINT')) {
+          return value;
+        }
+        return value;
+      },
+      from: (value: any) => {
+        // PostgreSQL devuelve el geometry como objeto, convertirlo a WKT string
+        return value;
+      }
+    }
   })
   location?: string;
 
@@ -64,7 +78,6 @@ export class Zone {
     return 0;
   }
 
-  // Virtual properties for getting coordinates from geometry if not set directly
   get lat(): number {
     return this.latitude ?? this.getCoordinateFromLocation(1);
   }

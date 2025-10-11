@@ -4,6 +4,7 @@
   import dotenv from 'dotenv';
   import { initializeDatabase } from './config/database';
   import routes from './routes';
+  import { jsonOnlyMiddleware } from './middlewares/jsonOnly';
 
 
   dotenv.config();
@@ -15,6 +16,7 @@
   app.use(cors());
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+  app.use(jsonOnlyMiddleware);
 
   // Request logging middleware
   app.use((req, res, next) => {
@@ -78,23 +80,23 @@
         console.log('🏄‍♂️ ============================================');
         console.log('🏄‍♂️ Surf Report API v2.0 is running!');
         console.log('🏄‍♂️ ============================================');
-        console.log(`📍 Server: http://localhost:${PORT}`);
-        console.log(`🔍 Health: http://localhost:${PORT}/health`);
-        console.log(`📊 API: http://localhost:${PORT}/api`);
-        console.log('');
-        console.log('🔧 Features:');
-        console.log('   • TypeORM with PostgreSQL + PostGIS');
-        console.log('   • Open Meteo Weather API Integration');
-        console.log('   • AI Report Generation (Gemini)');
-        console.log('   • Advanced Repository Pattern');
-        console.log('   • Geospatial Spot Management');
-        console.log('');
-        console.log('📚 API Endpoints:');
-        console.log('   • POST /api/reports/generate - Generate surf report');
-        console.log('   • GET  /api/reports/recent - Recent reports');
-        console.log('   • GET  /api/spots - List all spots');
-        console.log('   • GET  /api/zones - List all zones');
-        console.log('   • GET  /api/reports/test/services - Test all services');
+        // console.log(`📍 Server: http://localhost:${PORT}`);
+        // console.log(`🔍 Health: http://localhost:${PORT}/health`);
+        // console.log(`📊 API: http://localhost:${PORT}/api`);
+        // console.log('');
+        // console.log('🔧 Features:');
+        // console.log('   • TypeORM with PostgreSQL + PostGIS');
+        // console.log('   • Open Meteo Weather API Integration');
+        // console.log('   • AI Report Generation (Gemini)');
+        // console.log('   • Advanced Repository Pattern');
+        // console.log('   • Geospatial Spot Management');
+        // console.log('');
+        // console.log('📚 API Endpoints:');
+        // console.log('   • POST /api/reports/generate - Generate surf report');
+        // console.log('   • GET  /api/reports/recent - Recent reports');
+        // console.log('   • GET  /api/spots - List all spots');
+        // console.log('   • GET  /api/zones - List all zones');
+        // console.log('   • GET  /api/reports/test/services - Test all services');
         console.log('');
       });
 

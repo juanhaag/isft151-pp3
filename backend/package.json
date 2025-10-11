@@ -12,11 +12,18 @@
     "db:sync": "ts-node -e \"import('./src/config/database').then(db => db.initializeDatabase())\"",
     "db:init": "npm run db:sync && npm run db:seed",
     "db:add-zone-location": "ts-node src/scripts/addZoneLocation.ts",
-    "db:create-postgis-functions": "ts-node src/scripts/createPostGISFunctions.ts"
+    "db:create-postgis-functions": "ts-node src/scripts/createPostGISFunctions.ts",
+    "migration:generate": "ts-node ./node_modules/typeorm/cli.js migration:generate -d ormconfig.ts",
+    "migration:create": "ts-node ./node_modules/typeorm/cli.js migration:create",
+    "migration:run": "ts-node ./node_modules/typeorm/cli.js migration:run -d ormconfig.ts",
+    "migration:revert": "ts-node ./node_modules/typeorm/cli.js migration:revert -d ormconfig.ts",
+    "migration:show": "ts-node ./node_modules/typeorm/cli.js migration:show -d ormconfig.ts"
   },
   "dependencies": {
+    "@types/cookie-parser": "^1.4.9",
     "axios": "^1.6.0",
     "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",

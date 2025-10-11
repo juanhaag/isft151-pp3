@@ -1,0 +1,25 @@
+---
+import { Waves, User } from 'lucide-astro';
+---
+
+<header class="bg-white/90 backdrop-blur-sm shadow-lg sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center py-4">
+      <div class="flex items-center space-x-3">
+        <Waves class="h-8 w-8 text-blue-600" />
+        <h1 class="text-2xl font-bold text-gray-900">OlasApp</h1>
+      </div>
+
+      <nav class="hidden md:flex space-x-8">
+        <a href="#inicio" class="text-gray-700 hover:text-blue-600 transition-colors">Inicio</a>
+        <a href="#reportes" class="text-gray-700 hover:text-blue-600 transition-colors">Reportes</a>
+        <a href="#contacto" class="text-gray-700 hover:text-blue-600 transition-colors">Contacto</a>
+      </nav>
+
+      <button id="login-button" class="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+        <User class="h-5 w-5" />
+        <span>Iniciar Sesión</span>
+      </button>
+    </div>
+  </div>
+</header>

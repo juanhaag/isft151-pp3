@@ -1,6 +1,5 @@
 import { Repository } from 'typeorm';
 import { User } from '../entities/User';
-import bcrypt from 'bcryptjs';
 import AppDataSource from '../config/database';
 
 export class UserRepository {
@@ -11,10 +10,6 @@ export class UserRepository {
   }
 
   async create(userData: Partial<User>): Promise<User> {
-    // Hash de contraseña antes de guardar
-    if (userData.password) {
-      userData.password = await bcrypt.hash(userData.password, 10);
-    }
     const user = this.repository.create(userData);
     return await this.repository.save(user);
   }

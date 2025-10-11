@@ -1,0 +1,93 @@
+---
+import { Search, MapPin } from 'lucide-astro';
+---
+
+<div class="space-y-2">
+  <label for="location-search" class="block text-sm font-medium text-gray-700">
+    Buscar spot de surf
+  </label>
+  <div class="relative">
+    <input
+      type="text"
+      id="location-search"
+      name="location"
+      placeholder="Ej: Mar del Plata, La Barra, Punta del Este..."
+      class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+      autocomplete="off"
+      required
+    />
+    <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+
+    <div id="suggestions" class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg hidden z-10 max-h-64 overflow-y-auto">
+    </div>
+  </div>
+</div>
+
+<script>
+  const locationInput = document.getElementById('location-search') as HTMLInputElement;
+  const suggestionsDiv = document.getElementById('suggestions');
+
+  const popularSpots = [
+    'Mar del Plata, Buenos Aires',
+    'La Barra, Uruguay',
+    'Punta del Este, Uruguay',
+    'Necochea, Buenos Aires',
+    'Pinamar, Buenos Aires',
+    'Villa Gesell, Buenos Aires',
+    'Miramar, Buenos Aires',
+    'Montañita, Ecuador',
+    'Florianópolis, Brasil',
+    'Ericeira, Portugal'
+  ];
+
+  let debounceTimer: number;
+
+  if (locationInput && suggestionsDiv) {
+    locationInput.addEventListener('input', (e) => {
+      clearTimeout(debounceTimer);
+      const query = (e.target as HTMLInputElement).value.toLowerCase();
+
+      debounceTimer = window.setTimeout(() => {
+        if (query.length === 0) {
+          suggestionsDiv.classList.add('hidden');
+          return;
+        }
+
+        const matches = popularSpots.filter(spot =>
+          spot.toLowerCase().includes(query)
+        );
+
+        if (matches.length > 0) {
+          suggestionsDiv.innerHTML = matches
+            .map(spot => `
+              <div class="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 flex items-center space-x-2">
+                <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                <span>${spot}</span>
+              </div>
+            `)
+            .join('');
+
+          suggestionsDiv.classList.remove('hidden');
+
+          suggestionsDiv.querySelectorAll('div').forEach(item => {
+            item.addEventListener('click', () => {
+              locationInput.value = item.textContent?.trim() || '';
+              suggestionsDiv.classList.add('hidden');
+            });
+          });
+        } else {
+          suggestionsDiv.classList.add('hidden');
+        }
+      }, 300);
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!locationInput.contains(e.target as Node) && !suggestionsDiv.contains(e.target as Node)) {
+        suggestionsDiv.classList.add('hidden');
+      }
+    });
+  }
+</script>

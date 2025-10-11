@@ -1,57 +1,92 @@
-import { Request, Response } from 'express';
-import { UserRepository } from '../repositories/UserRepository';
-import AppDataSource from '../config/database';
-import { User } from '../entities/User';
-import bcrypt from 'bcryptjs';
+import { Response } from 'express';
+import { UserService } from '../services/UserService';
+import { UserRequest, CreateUserRequest, UpdateUserRequest } from '../requests/UserRequest';
+import { UserResource } from '../resources/UserResource';
+import { UserValidator } from '../api-wrapper/validators/UserValidator';
+import { CreateUserOutput, GetAllUsersOutput, GetUserByIdOutput } from '../api-wrapper/types/UserTypes';
 
 export class UserController {
-  private userRepository: UserRepository;
+  private userService: UserService;
 
   constructor() {
-    // Obtenemos el repositorio de TypeORM desde AppDataSource
-    this.userRepository = new UserRepository(AppDataSource.getRepository(User));
+    this.userService = new UserService();
   }
 
-  async create(req: Request, res: Response) {
+  async create(req: CreateUserRequest, res: Response) {
+    // Validate input with API wrapper
+    const inputValidation = UserValidator.validateCreateUserInput(req.body);
+    if (!inputValidation.valid) {
+      return res.status(400).json({ errors: inputValidation.errors });
+    }
+
+    // Also validate with existing business logic validator
+    const validation = UserRequest.validateCreate(req.body);
+    if (!validation.valid) {
+      return res.status(400).json({ errors: validation.errors });
+    }
+
     const { username, email, password, phone } = req.body;
 
-    // Validaciones básicas
-    if (!username || !email || !password) {
-      return res.status(400).json({ error: 'Username, email and password are required.' });
-    }
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters.' });
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return res.status(400).json({ error: 'Invalid email format.' });
-    }
-
     try {
-      // Verifica si el usuario o email ya existen
-      const existingUser = await this.userRepository.findByUsername(username);
-      if (existingUser) return res.status(409).json({ error: 'Username already exists.' });
+      const newUser = await this.userService.createUser({
+        username,
+        email,
+        password,
+        phone
+      });
 
-      const existingEmail = await this.userRepository.findByEmail(email);
-      if (existingEmail) return res.status(409).json({ error: 'Email already exists.' });
+      // Prepare output according to API spec
+      const output: CreateUserOutput = {
+        id: newUser.id,
+        username: newUser.username,
+        email: newUser.email,
+        phone: newUser.phone
+      };
 
-      // Crear usuario usando TypeORM
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const newUser = await this.userRepository.create({ username, email, password: hashedPassword, phone });
+      // Validate output with API wrapper
+      const outputValidation = UserValidator.validateCreateUserOutput(output);
+      if (!outputValidation.valid) {
+        console.error("API Output validation failed:", outputValidation.errors);
+      }
 
-      // No devuelvas la contraseña
-      const { password: _, ...userSafe } = newUser;
-      res.status(201).json(userSafe);
+      res.status(201).json(output);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error creating user';
+
+      if (errorMessage === 'Username already exists') {
+        return res.status(409).json({ error: errorMessage });
+      }
+
+      if (errorMessage === 'Email already exists') {
+        return res.status(409).json({ error: errorMessage });
+      }
+
       console.error(error);
-      res.status(500).json({ error: 'Error creating user', details: error instanceof Error ? error.message : error });
+      res.status(500).json({ error: 'Error creating user', details: errorMessage });
     }
   }
 
   async getAll(req: Request, res: Response) {
     try {
-      const users = await this.userRepository.findAll();
-      const safeUsers = users.map(({ password, ...rest }) => rest);
-      res.json(safeUsers);
+      const users = await this.userService.getAllUsers();
+
+      // Prepare output according to API spec
+      const output: GetAllUsersOutput = {
+        users: users.map(user => ({
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          phone: user.phone
+        }))
+      };
+
+      // Validate output with API wrapper
+      const outputValidation = UserValidator.validateGetAllUsersOutput(output);
+      if (!outputValidation.valid) {
+        console.error("API Output validation failed:", outputValidation.errors);
+      }
+
+      res.json(output);
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Error fetching users', details: error instanceof Error ? error.message : error });
@@ -59,56 +94,77 @@ export class UserController {
   }
 
   async getById(req: Request, res: Response) {
+    // Validate input with API wrapper
+    const inputValidation = UserValidator.validateGetUserByIdInput({ id: req.params.id });
+    if (!inputValidation.valid) {
+      return res.status(400).json({ errors: inputValidation.errors });
+    }
+
     try {
-      const user = await this.userRepository.findById(Number(req.params.id));
+      const user = await this.userService.findUserById(Number(req.params.id));
       if (!user) return res.status(404).json({ error: 'User not found' });
 
-      const { password, ...userSafe } = user;
-      res.json(userSafe);
+      // Prepare output according to API spec
+      const output: GetUserByIdOutput = {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        phone: user.phone
+      };
+
+      // Validate output with API wrapper
+      const outputValidation = UserValidator.validateGetUserByIdOutput(output);
+      if (!outputValidation.valid) {
+        console.error("API Output validation failed:", outputValidation.errors);
+      }
+
+      res.json(output);
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Error fetching user', details: error instanceof Error ? error.message : error });
     }
   }
 
-  async update(req: Request, res: Response) {
+  async update(req: UpdateUserRequest, res: Response) {
+    const validation = UserRequest.validateUpdate(req.body);
+    if (!validation.valid) {
+      return res.status(400).json({ errors: validation.errors });
+    }
+
     try {
       const id = Number(req.params.id);
       const updates = req.body;
 
-      if (updates.password && updates.password.length < 6) {
-        return res.status(400).json({ error: 'Password must be at least 6 characters.' });
-      }
+      const updatedUser = await this.userService.updateUser(id, updates);
 
-      if (updates.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(updates.email)) {
-        return res.status(400).json({ error: 'Invalid email format.' });
-      }
-
-      if (updates.password) {
-        updates.password = await bcrypt.hash(updates.password, 10);
-      }
-
-      const updatedUser = await this.userRepository.update(id, updates);
-      if (!updatedUser) return res.status(404).json({ error: 'User not found or no changes provided.' });
-
-      const { password, ...userSafe } = updatedUser;
-      res.json(userSafe);
+      res.json(UserResource.single(updatedUser));
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error updating user';
+
+      if (errorMessage === 'User not found') {
+        return res.status(404).json({ error: errorMessage });
+      }
+
       console.error(error);
-      res.status(500).json({ error: 'Error updating user', details: error instanceof Error ? error.message : error });
+      res.status(500).json({ error: 'Error updating user', details: errorMessage });
     }
   }
 
   async delete(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
-      const success = await this.userRepository.delete(id);
-      if (!success) return res.status(404).json({ error: 'User not found.' });
+      await this.userService.deleteUser(id);
 
       res.json({ success: true });
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error deleting user';
+
+      if (errorMessage === 'User not found') {
+        return res.status(404).json({ error: errorMessage });
+      }
+
       console.error(error);
-      res.status(500).json({ error: 'Error deleting user', details: error instanceof Error ? error.message : error });
+      res.status(500).json({ error: 'Error deleting user', details: errorMessage });
     }
   }
 }

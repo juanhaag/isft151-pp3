@@ -1,0 +1,267 @@
+---
+import DatePicker from './DatePicker.astro';
+import LocationSearch from './LocationSearch.astro';
+import RatingFeedback from './RatingFeedback.astro';
+import { BarChart3 } from 'lucide-astro';
+---
+
+<section id="reportes" class="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-12">
+      <div class="flex items-center justify-center space-x-3 mb-4">
+        <BarChart3 class="h-10 w-10 text-blue-600" />
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-900">
+          Genera tu Reporte
+        </h2>
+      </div>
+      <p class="text-xl text-gray-600">
+        Completa los datos para obtener un reporte personalizado de condiciones de surf
+      </p>
+    </div>
+
+    <div class="bg-gray-50 rounded-2xl p-8">
+      <form id="surf-report-form" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <LocationSearch />
+          <DatePicker />
+        </div>
+
+        <div class="flex justify-center pt-6">
+          <button
+            type="submit"
+            class="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold py-4 px-8 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg"
+          >
+            Generar Reporte de Surf
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div id="report-results" class="mt-12 hidden">
+      <div class="bg-white rounded-2xl shadow-lg p-8">
+        <h3 class="text-2xl font-bold text-gray-900 mb-6">Reporte de Surf</h3>
+        <div id="report-content" class="space-y-6">
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden template for rating feedback -->
+    <div class="hidden">
+      <RatingFeedback />
+    </div>
+  </div>
+</section>
+
+<script>
+  const form = document.getElementById('surf-report-form') as HTMLFormElement;
+  const resultsDiv = document.getElementById('report-results');
+  const contentDiv = document.getElementById('report-content');
+
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(form);
+      const location = formData.get('location') as string;
+      const date = formData.get('date') as string;
+
+      if (!location || !date) {
+        alert('Por favor completa todos los campos');
+        return;
+      }
+
+      // Show loading
+      (window as any).showLoading?.();
+
+      // Simulate API call
+      setTimeout(() => {
+        (window as any).hideLoading?.();
+
+        if (resultsDiv && contentDiv) {
+          contentDiv.innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="bg-blue-50 rounded-lg p-6">
+                <h4 class="font-semibold text-blue-900 mb-3">Condiciones Generales</h4>
+                <div class="space-y-2 text-sm">
+                  <p><strong>Ubicación:</strong> ${location}</p>
+                  <p><strong>Fecha:</strong> ${new Date(date).toLocaleDateString('es-ES')}</p>
+                  <p><strong>Calificación:</strong> ⭐⭐⭐⭐ (Excelente)</p>
+                </div>
+              </div>
+
+              <div class="bg-green-50 rounded-lg p-6">
+                <h4 class="font-semibold text-green-900 mb-3">Condiciones de Oleaje</h4>
+                <div class="space-y-2 text-sm">
+                  <p><strong>Altura:</strong> 1.2 - 1.8m</p>
+                  <p><strong>Período:</strong> 12-14 segundos</p>
+                  <p><strong>Dirección:</strong> SW</p>
+                </div>
+              </div>
+
+              <div class="bg-yellow-50 rounded-lg p-6">
+                <h4 class="font-semibold text-yellow-900 mb-3">Viento</h4>
+                <div class="space-y-2 text-sm">
+                  <p><strong>Velocidad:</strong> 10-15 km/h</p>
+                  <p><strong>Dirección:</strong> Offshore (N)</p>
+                  <p><strong>Condición:</strong> Favorable</p>
+                </div>
+              </div>
+
+              <div class="bg-purple-50 rounded-lg p-6">
+                <h4 class="font-semibold text-purple-900 mb-3">Marea</h4>
+                <div class="space-y-2 text-sm">
+                  <p><strong>Pleamar:</strong> 14:30</p>
+                  <p><strong>Bajamar:</strong> 08:15</p>
+                  <p><strong>Mejor horario:</strong> 10:00 - 12:00</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg p-6 text-white mt-6">
+              <h4 class="font-semibold mb-3">Recomendación IA</h4>
+              <p>
+                Las condiciones para ${location} el ${new Date(date).toLocaleDateString('es-ES')} son excelentes para surfear.
+                Oleaje consistente de SW con período largo, viento offshore favorable y marea ideal.
+                Recomendamos surfear entre las 10:00 y 12:00 para aprovechar las mejores condiciones.
+              </p>
+            </div>
+          `;
+
+          // Add rating feedback component
+          contentDiv.innerHTML += `
+            <div class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-6 mt-6" id="rating-feedback-result">
+              <div class="flex items-center space-x-3 mb-4">
+                <svg class="h-6 w-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                </svg>
+                <h4 class="text-lg font-semibold text-gray-900">¿Qué te pareció este reporte?</h4>
+              </div>
+              <form class="space-y-4" onsubmit="submitFeedback(event)">
+                <div class="space-y-2">
+                  <label class="block text-sm font-medium text-gray-700">Calificación</label>
+                  <div class="flex space-x-1" id="star-rating-result">
+                    <button type="button" onclick="setRating(1)" class="star-btn-result" data-rating="1">
+                      <svg class="h-6 w-6 text-gray-300 hover:text-yellow-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                      </svg>
+                    </button>
+                    <button type="button" onclick="setRating(2)" class="star-btn-result" data-rating="2">
+                      <svg class="h-6 w-6 text-gray-300 hover:text-yellow-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                      </svg>
+                    </button>
+                    <button type="button" onclick="setRating(3)" class="star-btn-result" data-rating="3">
+                      <svg class="h-6 w-6 text-gray-300 hover:text-yellow-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                      </svg>
+                    </button>
+                    <button type="button" onclick="setRating(4)" class="star-btn-result" data-rating="4">
+                      <svg class="h-6 w-6 text-gray-300 hover:text-yellow-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                      </svg>
+                    </button>
+                    <button type="button" onclick="setRating(5)" class="star-btn-result" data-rating="5">
+                      <svg class="h-6 w-6 text-gray-300 hover:text-yellow-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                      </svg>
+                    </button>
+                  </div>
+                  <input type="hidden" id="rating-value-result" name="rating" value="0" />
+                </div>
+                <div class="space-y-2">
+                  <label for="feedback-comment-result" class="block text-sm font-medium text-gray-700">
+                    Comentarios (opcional)
+                  </label>
+                  <textarea
+                    id="feedback-comment-result"
+                    name="comment"
+                    rows="3"
+                    placeholder="Cuéntanos qué te pareció el reporte y cómo podemos mejorarlo..."
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                  ></textarea>
+                </div>
+                <div class="flex justify-end">
+                  <button
+                    type="submit"
+                    class="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors"
+                  >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
+                    <span>Enviar Feedback</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          `;
+
+          resultsDiv.classList.remove('hidden');
+          resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 3000);
+    });
+  }
+
+  // Global functions for rating feedback
+  let currentResultRating = 0;
+
+  function setRating(rating) {
+    currentResultRating = rating;
+    const ratingInput = document.getElementById('rating-value-result');
+    if (ratingInput) {
+      ratingInput.value = rating.toString();
+    }
+    updateResultStars();
+  }
+
+  function updateResultStars() {
+    const starButtons = document.querySelectorAll('.star-btn-result');
+    starButtons.forEach((button, index) => {
+      const star = button.querySelector('svg');
+      if (star) {
+        if (index < currentResultRating) {
+          star.classList.remove('text-gray-300');
+          star.classList.add('text-yellow-400');
+          star.innerHTML = '<path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>';
+        } else {
+          star.classList.remove('text-yellow-400');
+          star.classList.add('text-gray-300');
+          star.innerHTML = '<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>';
+        }
+      }
+    });
+  }
+
+  function submitFeedback(event) {
+    event.preventDefault();
+
+    if (currentResultRating === 0) {
+      alert('Por favor selecciona una calificación');
+      return;
+    }
+
+    const comment = document.getElementById('feedback-comment-result')?.value || '';
+
+    // Simulate API call
+    setTimeout(() => {
+      const feedbackDiv = document.getElementById('rating-feedback-result');
+      if (feedbackDiv) {
+        feedbackDiv.innerHTML = `
+          <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">
+            <div class="flex items-center space-x-2">
+              <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+              </svg>
+              <span class="font-medium">¡Gracias por tu feedback!</span>
+            </div>
+            <p class="mt-1 text-sm">Tu calificación de ${currentResultRating} estrellas y comentarios nos ayudan a mejorar nuestros reportes.</p>
+          </div>
+        `;
+      }
+    }, 500);
+  }
+
+  // Make functions global
+  window.setRating = setRating;
+  window.submitFeedback = submitFeedback;
+</script>
