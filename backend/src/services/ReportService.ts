@@ -1,10 +1,9 @@
 import { OpenMeteoService, Point } from './OpenMeteoService';
 import { SpotRepository } from '../repositories/SpotRepository';
 import { ReportRepository } from '../repositories/ReportRepository';
-import { ZoneRepository } from '../repositories/ZoneRepository';
 import { AIProviderFactory, AIProviderType } from '../strategy/AIProviderFactory';
 import { IAIProvider } from '../strategy/IAIProvider';
-import { Report, Spot, Zone, WeatherData } from '../entities';
+import { Report, Spot, WeatherData } from '../entities';
 
 export interface GenerateReportRequest {
   spotId: string;
@@ -23,7 +22,6 @@ export class ReportService {
   private openMeteoService: OpenMeteoService;
   private spotRepository: SpotRepository;
   private reportRepository: ReportRepository;
-  private zoneRepository: ZoneRepository;
   private aiProvider: IAIProvider;
   private config: ReportServiceConfig;
 
@@ -31,8 +29,12 @@ export class ReportService {
     config: ReportServiceConfig = {},
     aiProvider?: IAIProvider
   ) {
+    // Determinar el proveedor desde la variable de entorno o usar Gemini por defecto
+    const providerFromEnv = process.env.AI_PROVIDER?.toLowerCase() as AIProviderType;
+    const defaultProvider = providerFromEnv || AIProviderType.GEMINI;
+
     this.config = {
-      defaultAiProvider: AIProviderType.GEMINI,
+      defaultAiProvider: defaultProvider,
       defaultForecastDays: 7,
       maxForecastDays: 14,
       ...config
@@ -41,12 +43,37 @@ export class ReportService {
     this.openMeteoService = new OpenMeteoService();
     this.spotRepository = new SpotRepository();
     this.reportRepository = new ReportRepository();
-    this.zoneRepository = new ZoneRepository();
 
-    this.aiProvider = aiProvider || AIProviderFactory.createProvider(
-      this.config.defaultAiProvider!,
-      { apiKey: process.env.GEMINI_API_KEY || '' }
-    );
+    // Configurar el provider según el tipo
+    if (!aiProvider) {
+      const providerConfig = this.getProviderConfig(this.config.defaultAiProvider!);
+      this.aiProvider = AIProviderFactory.createProvider(
+        this.config.defaultAiProvider!,
+        providerConfig
+      );
+    } else {
+      this.aiProvider = aiProvider;
+    }
+
+    console.log(`🤖 AI Provider configurado: ${this.config.defaultAiProvider}`);
+  }
+
+  private getProviderConfig(providerType: AIProviderType): any {
+    switch (providerType) {
+      case AIProviderType.GEMINI:
+        return {
+          apiKey: process.env.GEMINI_API_KEY || '',
+          model: process.env.GEMINI_MODEL
+        };
+      case AIProviderType.OLLAMA:
+        return {
+          apiKey: '', // Ollama no necesita API key
+          baseUrl: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
+          model: process.env.OLLAMA_MODEL || 'qwen2.5:7b'
+        };
+      default:
+        return { apiKey: '' };
+    }
   }
 
   async generateReport(request: GenerateReportRequest): Promise<Report> {
@@ -87,20 +114,14 @@ export class ReportService {
 
       console.log(`📊 Weather data processed: ${processedData.summary.totalHours} hours of forecast`);
 
-      // Obtener zona si no está cargada
-      let zone = spot.zone;
-      if (!zone && spot.zona_id) {
-        zone = await this.zoneRepository.findById(spot.zona_id);
-      }
-
       console.log(`🎯 Using AI provider to generate report...`);
 
-      // Generar reporte con IA
+      // Generar reporte con IA usando datos del spot
       const reportText = await this.aiProvider.generateReport({
         weatherData,
         localidadNombre: spot.display_name,
         preferencias: userPreferences,
-        zone: zone || undefined
+        spot: spot
       });
 
       console.log(`✅ AI report generated successfully`);
@@ -149,14 +170,6 @@ export class ReportService {
     }
   }
 
-  async getReportsByZone(zoneId: number, limit: number = 20): Promise<Report[]> {
-    try {
-      return await this.reportRepository.findByZone(zoneId, limit);
-    } catch (error) {
-      console.error('Error getting reports by zone:', error);
-      throw new Error(`Failed to get reports by zone: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
 
   async searchReports(searchTerm: string, limit: number = 20): Promise<Report[]> {
     try {

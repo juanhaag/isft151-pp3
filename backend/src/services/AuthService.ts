@@ -83,8 +83,8 @@ export class AuthService {
       email: user.email,
     };
 
-    const secret = process.env.JWT_SECRET || "secretkey";
-    const expiresIn = process.env.JWT_EXPIRES_IN || "1h";
+    const secret: string = process.env.JWT_SECRET || "secretkey";
+    const expiresIn: string | number = process.env.JWT_EXPIRES_IN || "1h";
 
     return jwt.sign(payload, secret, { expiresIn });
   }

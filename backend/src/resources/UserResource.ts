@@ -16,8 +16,8 @@ export class UserResource {
       username: user.username,
       email: user.email,
       phone: user.phone || null,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
+      createdAt: user.created_at,
+      updatedAt: user.updated_at,
     };
   }
 

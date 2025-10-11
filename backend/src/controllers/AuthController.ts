@@ -106,7 +106,7 @@ export class AuthController {
   static async login(req: LoginRequest, res: Response) {
     // Validate input with API wrapper
     const inputValidation = AuthValidator.validateLoginInput({
-      username: req.body.email || req.body.username || "",
+      email: req.body.email || "",
       password: req.body.password || "",
     });
     if (!inputValidation.valid) {

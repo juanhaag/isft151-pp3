@@ -49,24 +49,23 @@ export class SpotController {
     }
   };
 
-  getSpotsByZone = async (req: Request, res: Response): Promise<void> => {
+  getSpotsByZona = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { zoneId } = req.params;
-      const zonaId = parseInt(zoneId);
+      const { zona } = req.params;
 
-      if (isNaN(zonaId)) {
-        res.status(400).json({ error: 'Invalid zone ID' });
+      if (!zona) {
+        res.status(400).json({ error: 'Zona name is required' });
         return;
       }
 
-      const spots = await this.spotRepository.findByZone(zonaId);
+      const spots = await this.spotRepository.findByZona(zona);
 
       res.json({
         success: true,
         data: spots
       });
     } catch (error) {
-      console.error('Error fetching spots by zone:', error);
+      console.error('Error fetching spots by zona:', error);
       res.status(500).json({
         success: false,
         error: error instanceof Error ? error.message : 'Internal server error'
@@ -76,20 +75,22 @@ export class SpotController {
 
   createSpot = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { place_id, lat, lon, display_name, zona, zona_id } = req.body;
+      const { place_id, lat, lon, display_name, zona, best_conditions, bad_conditions } = req.body;
 
-      if (!place_id || !lat || !lon || !display_name || !zona || !zona_id) {
-        res.status(400).json({ error: 'All fields are required' });
+      if (!place_id || !lat || !lon || !display_name || !zona || !best_conditions) {
+        res.status(400).json({ error: 'place_id, lat, lon, display_name, zona, and best_conditions are required' });
         return;
       }
 
+      const location = `POINT(${lon} ${lat})`;
+
       const spot = await this.spotRepository.create({
         place_id,
-        lat: lat.toString(),
-        lon: lon.toString(),
+        location,
         display_name,
         zona,
-        zona_id: parseInt(zona_id)
+        best_conditions,
+        bad_conditions
       });
 
       res.status(201).json({

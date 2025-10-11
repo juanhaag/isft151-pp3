@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import dotenv from 'dotenv';
-import { Zone, Spot, Report, User } from '../entities';
+import { Spot, Report, User } from '../entities';
 
 dotenv.config();
 
@@ -14,10 +14,10 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_DATABASE || 'surfdb',
   synchronize: false, // Deshabilitado - usar migraciones en su lugar
   logging: process.env.NODE_ENV === 'development',
-  entities: [Zone, Spot, Report, User],
+  entities: [Spot, Report, User],
   migrations: [__dirname + '/../migrations/*.ts'],
   migrationsTableName: 'migrations',
-  migrationsRun: false, 
+  migrationsRun: false,
 });
 
 export const initializeDatabase = async (): Promise<void> => {

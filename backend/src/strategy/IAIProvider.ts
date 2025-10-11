@@ -1,4 +1,4 @@
-import { WeatherData, Zone } from '../types';
+import { WeatherData, Spot } from '../types';
 
 export interface AIProviderConfig {
   apiKey: string;
@@ -9,7 +9,7 @@ export interface ReportRequest {
   weatherData: WeatherData;
   localidadNombre: string;
   preferencias?: string;
-  zone?: Zone;
+  spot?: Spot;
 }
 
 export interface IAIProvider {

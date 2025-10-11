@@ -12,7 +12,6 @@ router.get('/recent', reportController.getRecentReports);
 router.get('/stats', reportController.getReportStats);
 router.get('/good-conditions', reportController.getReportsWithGoodConditions);
 router.get('/search', reportController.searchReports);
-router.get('/zone/:zoneId', reportController.getReportsByZone);
 router.get('/spot/:spotId', reportController.getReportsBySpot);
 router.get('/:id', reportController.getReport);
 

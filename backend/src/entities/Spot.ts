@@ -1,6 +1,20 @@
-import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
-import { Zone } from './Zone';
+import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 import { Report } from './Report';
+
+export interface BestConditions {
+  swell_direction?: string[];
+  wind_direction?: string[];
+  wave_type?: string[];
+  wave_direction?: string[];
+  tide?: string[];
+  notes?: string;
+}
+
+export interface BadConditions {
+  swell_direction?: string[];
+  wind_direction?: string[];
+  notes?: string;
+}
 
 @Entity('spots')
 export class Spot {
@@ -20,18 +34,17 @@ export class Spot {
   @Column({ type: 'varchar', length: 255 })
   zona!: string;
 
-  @Column({ type: 'integer' })
-  zona_id!: number;
+  @Column({ type: 'jsonb' })
+  best_conditions!: BestConditions;
+
+  @Column({ type: 'jsonb', nullable: true })
+  bad_conditions?: BadConditions;
 
   @CreateDateColumn()
   created_at!: Date;
 
   @UpdateDateColumn()
   updated_at!: Date;
-
-  @ManyToOne(() => Zone, zone => zone.spots)
-  @JoinColumn({ name: 'zona_id' })
-  zone!: Zone;
 
   @OneToMany(() => Report, report => report.spot)
   reports!: Report[];

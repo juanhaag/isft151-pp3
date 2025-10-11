@@ -26,7 +26,7 @@ export class ReportRepository implements IReportRepository {
       // Cargar el spot relacionado
       const reportWithSpot = await this.repository.findOne({
         where: { id: savedReport.id },
-        relations: ['spot', 'spot.zone']
+        relations: ['spot']
       });
 
       return reportWithSpot || savedReport;
@@ -40,7 +40,7 @@ export class ReportRepository implements IReportRepository {
     try {
       const report = await this.repository.findOne({
         where: { id },
-        relations: ['spot', 'spot.zone']
+        relations: ['spot']
       });
       return report;
     } catch (error) {
@@ -52,7 +52,7 @@ export class ReportRepository implements IReportRepository {
   async findAll(limit: number = 50): Promise<Report[]> {
     try {
       const reports = await this.repository.find({
-        relations: ['spot', 'spot.zone'],
+        relations: ['spot'],
         order: {
           created_at: 'DESC'
         },
@@ -69,7 +69,7 @@ export class ReportRepository implements IReportRepository {
     try {
       const reports = await this.repository.find({
         where: { spot_id: spotId },
-        relations: ['spot', 'spot.zone'],
+        relations: ['spot'],
         order: {
           created_at: 'DESC'
         },
@@ -85,7 +85,7 @@ export class ReportRepository implements IReportRepository {
   async findRecent(limit: number = 20): Promise<Report[]> {
     try {
       const reports = await this.repository.find({
-        relations: ['spot', 'spot.zone'],
+        relations: ['spot'],
         order: {
           created_at: 'DESC'
         },
@@ -114,7 +114,6 @@ export class ReportRepository implements IReportRepository {
       const reports = await this.repository
         .createQueryBuilder('report')
         .leftJoinAndSelect('report.spot', 'spot')
-        .leftJoinAndSelect('spot.zone', 'zone')
         .where('report.created_at >= :startDate', { startDate })
         .andWhere('report.created_at <= :endDate', { endDate })
         .orderBy('report.created_at', 'DESC')
@@ -127,30 +126,11 @@ export class ReportRepository implements IReportRepository {
     }
   }
 
-  async findByZone(zoneId: number, limit: number = 20): Promise<Report[]> {
-    try {
-      const reports = await this.repository
-        .createQueryBuilder('report')
-        .leftJoinAndSelect('report.spot', 'spot')
-        .leftJoinAndSelect('spot.zone', 'zone')
-        .where('spot.zona_id = :zoneId', { zoneId })
-        .orderBy('report.created_at', 'DESC')
-        .limit(limit)
-        .getMany();
-
-      return reports;
-    } catch (error) {
-      console.error('Error finding reports by zone:', error);
-      throw new Error(`Failed to find reports by zone: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
   async searchByContent(searchTerm: string, limit: number = 20): Promise<Report[]> {
     try {
       const reports = await this.repository
         .createQueryBuilder('report')
         .leftJoinAndSelect('report.spot', 'spot')
-        .leftJoinAndSelect('spot.zone', 'zone')
         .where('LOWER(report.report_text) LIKE LOWER(:searchTerm)', {
           searchTerm: `%${searchTerm}%`
         })
@@ -222,7 +202,6 @@ export class ReportRepository implements IReportRepository {
       const reports = await this.repository
         .createQueryBuilder('report')
         .leftJoinAndSelect('report.spot', 'spot')
-        .leftJoinAndSelect('spot.zone', 'zone')
         .where(
           `EXISTS (
             SELECT 1 FROM jsonb_array_elements_text(

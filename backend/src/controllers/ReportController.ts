@@ -185,47 +185,6 @@ export class ReportController {
     }
   };
 
-  getReportsByZone = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { zoneId } = req.params;
-      const limit = parseInt(req.query.limit as string) || 20;
-      const zoneIdNum = parseInt(zoneId);
-
-      if (isNaN(zoneIdNum)) {
-        res.status(400).json({
-          success: false,
-          error: 'Invalid zone ID'
-        });
-        return;
-      }
-
-      if (limit < 1 || limit > 100) {
-        res.status(400).json({
-          success: false,
-          error: 'Limit must be between 1 and 100'
-        });
-        return;
-      }
-
-      const reports = await this.reportService.getReportsByZone(zoneIdNum, limit);
-
-      res.json({
-        success: true,
-        data: reports,
-        meta: {
-          count: reports.length,
-          limit,
-          zoneId: zoneIdNum
-        }
-      });
-    } catch (error) {
-      console.error('Error fetching reports by zone:', error);
-      res.status(500).json({
-        success: false,
-        error: error instanceof Error ? error.message : 'Internal server error'
-      });
-    }
-  };
 
   searchReports = async (req: Request, res: Response): Promise<void> => {
     try {
