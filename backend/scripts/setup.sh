@@ -211,6 +211,20 @@ test_database_connection() {
     echo ""
 }
 
+# Instalar extensión pgvector
+install_pgvector() {
+    print_step "Instalando extensión pgvector..."
+
+    if docker exec olaspp_postgres_vector psql -U postgres -d olaspp -c "CREATE EXTENSION IF NOT EXISTS vector;" &> /dev/null; then
+        print_success "Extensión pgvector instalada"
+    else
+        print_warning "pgvector no está disponible"
+        print_step "Nota: La extensión debe instalarse manualmente o via migrations_vectorization.sql"
+    fi
+
+    echo ""
+}
+
 # Mostrar información del setup
 show_info() {
     echo ""
@@ -247,6 +261,7 @@ main() {
     start_database
     wait_for_database
     test_database_connection
+    install_pgvector
     run_migrations
 
     show_info

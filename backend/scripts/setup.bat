@@ -151,15 +151,21 @@ if %attempts% geq %max_attempts% (
     exit /b 1
 )
 
-docker exec olaspp_postgres_vector pg_isready -U postgres -d olaspp >nul 2>&1
+REM Primero esperar un poco si es el primer intento
+if %attempts% equ 0 (
+    timeout /t 3 /nobreak >nul
+)
+
+docker exec olaspp_postgres_vector pg_isready -U postgres -d olaspp 2>nul
 if %ERRORLEVEL% equ 0 (
+    echo.
     echo [OK] PostgreSQL está listo
     goto :postgres_ready
 )
 
 set /a attempts+=1
 echo|set /p="."
-timeout /t 1 /nobreak >nul
+timeout /t 2 /nobreak >nul
 goto :wait_loop
 
 :postgres_ready
@@ -174,6 +180,17 @@ if %ERRORLEVEL% neq 0 (
     exit /b 1
 )
 echo [OK] Conexión exitosa
+echo.
+
+REM Instalar extensión pgvector
+echo [*] Instalando extensión pgvector...
+docker exec olaspp_postgres_vector psql -U postgres -d olaspp -c "CREATE EXTENSION IF NOT EXISTS vector;" >nul 2>&1
+if %ERRORLEVEL% neq 0 (
+    echo [!] Advertencia: pgvector no está disponible
+    echo [*] Nota: La extensión debe instalarse manualmente o via migrations_vectorization.sql
+) else (
+    echo [OK] Extensión pgvector instalada
+)
 echo.
 
 REM Ejecutar migraciones

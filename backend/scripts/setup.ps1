@@ -246,6 +246,27 @@ function Test-DatabaseConnection {
     return $true
 }
 
+# Instalar extensión pgvector
+function Install-PgVector {
+    Write-Step "Instalando extensión pgvector..."
+
+    try {
+        docker exec olaspp_postgres_vector psql -U postgres -d olaspp -c "CREATE EXTENSION IF NOT EXISTS vector;" 2>&1 | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            Write-Success "Extensión pgvector instalada"
+        } else {
+            Write-Warning "pgvector no está disponible"
+            Write-Step "Nota: La extensión debe instalarse manualmente o via migrations_vectorization.sql"
+        }
+    } catch {
+        Write-Warning "Error al instalar pgvector"
+        Write-Step "Nota: La extensión debe instalarse manualmente o via migrations_vectorization.sql"
+    }
+
+    Write-Host ""
+    return $true
+}
+
 # Mostrar información del setup
 function Show-Info {
     Write-Host ""
@@ -290,6 +311,8 @@ function Main {
         Write-Error "Falló la prueba de conexión"
         exit 1
     }
+
+    Install-PgVector
 
     Run-Migrations
     Show-Info
