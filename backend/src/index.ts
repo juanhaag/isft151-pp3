@@ -41,7 +41,7 @@
   });
 
   // API routes
-  app.use('/api', routes);
+  app.use('/api/', routes);
 
   // Global error handler
   app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

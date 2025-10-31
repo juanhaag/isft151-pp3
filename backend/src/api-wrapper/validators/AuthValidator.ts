@@ -56,9 +56,9 @@ export class AuthValidator {
   static validateLoginInput(data: any): { valid: boolean; errors?: string[] } {
     const errors: string[] = [];
 
-    if (!data.username || typeof data.username !== "string") {
-      errors.push("username is required and must be a string");
-    }
+    // if (!data.username || typeof data.username !== "string") {
+    //   errors.push("username is required and must be a string");
+    // }
 
     if (!data.password || typeof data.password !== "string") {
       errors.push("password is required and must be a string");
@@ -88,15 +88,15 @@ export class AuthValidator {
    */
   static validateLoginResponse(data: any, statusCode: number): { valid: boolean; errors?: string[] } {
     if (statusCode === 200 && "token" in data) {
-      return this.validateLoginOutput(data);
+      return AuthValidator.validateLoginOutput(data);
     }
 
     if (statusCode === 400 && "errors" in data) {
-      return this.validateValidationErrorResponse(data);
+      return AuthValidator.validateValidationErrorResponse(data);
     }
 
     if ("error" in data && "description" in data) {
-      return this.validateErrorResponse(data);
+      return AuthValidator.validateErrorResponse(data);
     }
 
     return {
@@ -170,15 +170,15 @@ export class AuthValidator {
   static validateRegisterResponse(data: any, statusCode: number): { valid: boolean; errors?: string[] } {
     // Check if it's a success response (201)
     if (statusCode === 201 && "token" in data && "user" in data) {
-      return this.validateRegisterOutput(data);
+      return AuthValidator.validateRegisterOutput(data);
     }
 
     if (statusCode === 400 && "errors" in data) {
-      return this.validateValidationErrorResponse(data);
+      return AuthValidator.validateValidationErrorResponse(data);
     }
 
     if ("error" in data && "description" in data) {
-      return this.validateErrorResponse(data);
+      return AuthValidator.validateErrorResponse(data);
     }
 
     return {
@@ -214,11 +214,11 @@ export class AuthValidator {
    */
   static validateLogoutResponse(data: any, statusCode: number): { valid: boolean; errors?: string[] } {
     if (statusCode === 200 && "success" in data && "message" in data) {
-      return this.validateLogoutOutput(data);
+      return AuthValidator.validateLogoutOutput(data);
     }
 
     if ("error" in data && "description" in data) {
-      return this.validateErrorResponse(data);
+      return AuthValidator.validateErrorResponse(data);
     }
 
     return {

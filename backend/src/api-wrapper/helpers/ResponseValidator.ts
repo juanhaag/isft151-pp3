@@ -34,7 +34,7 @@ export class ResponseValidator {
   }
 
   /**
-   * Sends a response without validation (for gradual migration)
+   * Sends a response without validation 
    */
   static send(res: Response, statusCode: number, data: any): Response {
     return res.status(statusCode).json(data);

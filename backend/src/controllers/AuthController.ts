@@ -12,176 +12,47 @@ import { ResponseValidator } from "../api-wrapper/helpers/ResponseValidator";
 export class AuthController {
   private static authService = new AuthService();
 
-  static async register(req: RegisterRequest, res: Response) {
-    // Validate input with API wrapper
-    const inputValidation = AuthValidator.validateRegisterInput(req.body);
-    if (!inputValidation.valid) {
-      return res.status(400).json({
-        error: "Validation Error",
-        description: inputValidation.errors?.join(", ") || "Invalid input"
-      });
-    }
+  static async register(
+    data: { username: string; email: string; password: string; phone?: string }
+  ): Promise<RegisterOutput> {
+    const { username, email, password, phone } = data;
 
-    // Also validate with existing business logic validator
-    const validation = AuthRequest.validateRegister(req.body);
-    if (!validation.valid) {
-      return res.status(400).json({ errors: validation.errors });
-    }
+    const newUser = await AuthController.authService.register({
+      username,
+      email,
+      password,
+      phone,
+    });
 
-    try {
-      const { username, email, password, phone } = req.body;
+    const token = AuthController.authService.generateToken(newUser);
 
-      const newUser = await AuthController.authService.register({
-        username,
-        email,
-        password,
-        phone,
-      });
-
-      const token = AuthController.authService.generateToken(newUser);
-
-      // Set httpOnly cookie (HTTP/Transport layer)
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 3600000,
-      });
-
-      // Prepare output according to API spec
-      const output: RegisterOutput = {
-        token,
-        user: {
-          id: newUser.id,
-          username: newUser.username,
-          email: newUser.email,
-          phone: newUser.phone,
-        }
-      };
-
-      // Validate output with API wrapper
-      const outputValidation = AuthValidator.validateRegisterOutput(output);
-      if (!outputValidation.valid) {
-        console.error("API Output validation failed:", outputValidation.errors);
+    const output: RegisterOutput = {
+      token,
+      user: {
+        id: newUser.id,
+        username: newUser.username,
+        email: newUser.email,
+        phone: newUser.phone,
       }
+    };
 
-      return ResponseValidator.validateAndSend(
-        res,
-        201,
-        output,
-        AuthValidator.validateRegisterResponse
-      );
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error al registrar usuario";
-
-      if (errorMessage === "El email ya existe") {
-        return ResponseValidator.validateAndSend(
-          res,
-          409,
-          { error: "Conflict", description: errorMessage },
-          AuthValidator.validateRegisterResponse
-        );
-      }
-
-      if (errorMessage === "El username ya existe") {
-        return ResponseValidator.validateAndSend(
-          res,
-          409,
-          { error: "Conflict", description: errorMessage },
-          AuthValidator.validateRegisterResponse
-        );
-      }
-
-      console.error(err);
-      return ResponseValidator.validateAndSend(
-        res,
-        500,
-        { error: "Internal Server Error", description: "Error al registrar usuario" },
-        AuthValidator.validateRegisterResponse
-      );
-    }
+    return output;
   }
 
-  static async login(req: LoginRequest, res: Response) {
-    // Validate input with API wrapper
-    const inputValidation = AuthValidator.validateLoginInput({
-      email: req.body.email || "",
-      password: req.body.password || "",
+  static async login(
+    data: { email: string; password: string }
+  ): Promise<LoginOutput> {
+
+    const { email, password } = data;
+
+    const { user, token } = await AuthController.authService.login({
+      email,
+      password,
     });
-    if (!inputValidation.valid) {
-      return res.status(400).json({
-        error: "Validation Error",
-        description: inputValidation.errors?.join(", ") || "Invalid input"
-      });
-    }
 
-    const validation = AuthRequest.validateLogin(req.body);
-    if (!validation.valid) {
-      return res.status(400).json({ errors: validation.errors });
-    }
+    const output: LoginOutput = { token };
 
-    try {
-      const { email, password } = req.body;
-
-      const { user, token } = await AuthController.authService.login({
-        email,
-        password,
-      });
-
-      // HTTP/Transport layer: Set cookie
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 3600000,
-      });
-
-      // Prepare output according to API spec
-      const output: LoginOutput = { token };
-
-      // Validate output with API wrapper
-      const outputValidation = AuthValidator.validateLoginOutput(output);
-      if (!outputValidation.valid) {
-        console.error("API Output validation failed:", outputValidation.errors);
-      }
-
-      return ResponseValidator.validateAndSend(
-        res,
-        200,
-        output,
-        AuthValidator.validateLoginResponse
-      );
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error en login";
-
-      if (errorMessage === "Usuario no encontrado") {
-        return ResponseValidator.validateAndSend(
-          res,
-          404,
-          { error: "Not Found", description: errorMessage },
-          AuthValidator.validateLoginResponse
-        );
-      }
-
-      if (errorMessage === "Credenciales inválidas") {
-        return ResponseValidator.validateAndSend(
-          res,
-          401,
-          { error: "Unauthorized", description: errorMessage },
-          AuthValidator.validateLoginResponse
-        );
-      }
-
-      console.error(err);
-      return ResponseValidator.validateAndSend(
-        res,
-        500,
-        { error: "Internal Server Error", description: "Error en login" },
-        AuthValidator.validateLoginResponse
-      );
-    }
+    return output;
   }
 
   static async logout(req: LoginRequest, res: Response) {

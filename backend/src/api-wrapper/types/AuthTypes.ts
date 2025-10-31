@@ -80,7 +80,7 @@ export interface RegisterOutput {
   token: string;
   user: {
     id: number;
-    username: string;
+    username?: string;
     email: string;
     phone?: string;
   };
