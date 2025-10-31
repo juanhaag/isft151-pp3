@@ -98,15 +98,6 @@ check_env_file() {
             print_step "Creando .env desde .env.example..."
             cp .env.example .env
             print_success "Archivo .env creado"
-            echo ""
-            print_warning "⚠️  IMPORTANTE: Debes configurar las siguientes variables en .env:"
-            echo ""
-            echo "  1. GEMINI_API_KEY=tu_api_key_aqui"
-            echo "     Obtén tu API key en: https://makersuite.google.com/app/apikey"
-            echo ""
-            echo "  2. DB_PASSWORD=tu_password_seguro"
-            echo ""
-            read -p "Presiona Enter cuando hayas configurado el archivo .env..."
         else
             print_error ".env.example no encontrado. No se puede crear .env"
             exit 1
@@ -115,14 +106,14 @@ check_env_file() {
         print_success "Archivo .env encontrado"
     fi
 
-    # Verificar que GEMINI_API_KEY esté configurado
-    if grep -q "GEMINI_API_KEY=your_gemini_api_key_here" .env; then
-        print_error "GEMINI_API_KEY no está configurado en .env"
-        print_warning "Obtén tu API key en: https://makersuite.google.com/app/apikey"
-        exit 1
-    fi
+    # Verificar y corregir configuración de base de datos
+    print_step "Verificando configuración de base de datos..."
+    sed -i 's/DB_PORT=5432/DB_PORT=5434/g' .env
+    sed -i 's/DB_NAME=surfdb/DB_NAME=olaspp/g' .env
+    sed -i 's/@localhost:5432\//@localhost:5434\//g' .env
+    sed -i 's/\/surfdb/\/olaspp/g' .env
+    print_success "Configuración actualizada (puerto 5434, base de datos olaspp)"
 
-    print_success "Configuración validada"
     echo ""
 }
 

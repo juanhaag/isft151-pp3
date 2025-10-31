@@ -102,20 +102,6 @@ function Check-EnvFile {
             Write-Step "Creando .env desde .env.example..."
             Copy-Item ".env.example" ".env"
             Write-Success "Archivo .env creado"
-            Write-Host ""
-            Write-Warning "⚠️  IMPORTANTE: Debes configurar las siguientes variables en .env:"
-            Write-Host ""
-            Write-Host "  1. GEMINI_API_KEY=tu_api_key_aqui"
-            Write-Host "     Obtén tu API key en: https://makersuite.google.com/app/apikey"
-            Write-Host ""
-            Write-Host "  2. DB_PASSWORD=tu_password_seguro"
-            Write-Host ""
-
-            # Abrir el archivo .env en el editor por defecto
-            Write-Host "Abriendo .env para editar..."
-            Start-Process notepad.exe ".env"
-
-            Read-Host "Presiona Enter cuando hayas configurado el archivo .env"
         } else {
             Write-Error ".env.example no encontrado. No se puede crear .env"
             exit 1
@@ -124,15 +110,16 @@ function Check-EnvFile {
         Write-Success "Archivo .env encontrado"
     }
 
-    # Verificar que GEMINI_API_KEY esté configurado
+    # Verificar y corregir configuración de base de datos
+    Write-Step "Verificando configuración de base de datos..."
     $envContent = Get-Content ".env" -Raw
-    if ($envContent -match "GEMINI_API_KEY=your_gemini_api_key_here") {
-        Write-Error "GEMINI_API_KEY no está configurado en .env"
-        Write-Warning "Obtén tu API key en: https://makersuite.google.com/app/apikey"
-        exit 1
-    }
+    $envContent = $envContent -replace 'DB_PORT=5432', 'DB_PORT=5434'
+    $envContent = $envContent -replace 'DB_NAME=surfdb', 'DB_NAME=olaspp'
+    $envContent = $envContent -replace '@localhost:5432/', '@localhost:5434/'
+    $envContent = $envContent -replace '/surfdb', '/olaspp'
+    Set-Content ".env" -Value $envContent
+    Write-Success "Configuración actualizada (puerto 5434, base de datos olaspp)"
 
-    Write-Success "Configuración validada"
     Write-Host ""
 }
 

@@ -63,22 +63,6 @@ if not exist ".env" (
         echo [*] Creando .env desde .env.example...
         copy .env.example .env >nul
         echo [OK] Archivo .env creado
-        echo.
-        echo ========================================
-        echo   IMPORTANTE: Configurar .env
-        echo ========================================
-        echo.
-        echo   Debes configurar las siguientes variables en .env:
-        echo.
-        echo   1. GEMINI_API_KEY=tu_api_key_aqui
-        echo      Obten tu API key en: https://makersuite.google.com/app/apikey
-        echo.
-        echo   2. DB_PASSWORD=tu_password_seguro
-        echo.
-        echo   Abriendo .env para editar...
-        echo.
-        start notepad.exe .env
-        pause
     ) else (
         echo [X] .env.example no encontrado
         pause
@@ -87,6 +71,11 @@ if not exist ".env" (
 ) else (
     echo [OK] Archivo .env encontrado
 )
+
+REM Verificar y corregir configuración de base de datos en .env
+echo [*] Verificando configuración de base de datos...
+powershell -Command "(Get-Content .env) -replace 'DB_PORT=5432', 'DB_PORT=5434' -replace 'DB_NAME=surfdb', 'DB_NAME=olaspp' -replace '@localhost:5432/', '@localhost:5434/' -replace '/surfdb', '/olaspp' | Set-Content .env"
+echo [OK] Configuración actualizada (puerto 5434, base de datos olaspp)
 echo.
 
 REM Instalar dependencias
