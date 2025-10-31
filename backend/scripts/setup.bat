@@ -122,17 +122,12 @@ if %ERRORLEVEL% equ 0 (
         echo [OK] El contenedor ya está corriendo
     ) else (
         echo [*] Iniciando contenedor existente...
-        docker-compose -f ..\docker-compose.vectordb.yml up -d
+        docker-compose -f ..\..\docker-compose.vectordb.yml up -d
         echo [OK] Contenedor iniciado
     )
 ) else (
     echo [*] Creando e iniciando nuevo contenedor...
-    docker-compose -f ..\docker-compose.vectordb.yml up -d
-    if %ERRORLEVEL% neq 0 (
-        echo [X] Error al iniciar contenedor
-        pause
-        exit /b 1
-    )
+    docker-compose -f ..\..\docker-compose.vectordb.yml up -d
     echo [OK] Contenedor creado e iniciado
 )
 echo.
@@ -222,8 +217,8 @@ echo   3. Explora los endpoints en src/routes/
 echo.
 echo 📚 Comandos útiles:
 echo   • Ver logs de DB: docker logs olaspp_postgres_vector -f
-echo   • Detener DB: docker-compose -f ..\docker-compose.vectordb.yml down
-echo   • Reiniciar DB: docker-compose -f ..\docker-compose.vectordb.yml restart
+echo   • Detener DB: docker-compose -f ..\..\docker-compose.vectordb.yml down
+echo   • Reiniciar DB: docker-compose -f ..\..\docker-compose.vectordb.yml restart
 echo   • Ver docs: type SETUP.md
 echo.
 
