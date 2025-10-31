@@ -1,5 +1,11 @@
 ---
 import { Star, MessageSquare, Send } from 'lucide-astro';
+
+interface Props {
+  reportId?: string;
+}
+
+const { reportId } = Astro.props;
 ---
 
 <div class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-6 mt-6" id="rating-feedback">
@@ -8,7 +14,7 @@ import { Star, MessageSquare, Send } from 'lucide-astro';
     <h4 class="text-lg font-semibold text-gray-900">¿Qué te pareció este reporte?</h4>
   </div>
 
-  <form id="feedback-form" class="space-y-4">
+  <form id="feedback-form" class="space-y-4" data-report-id={reportId}>
     <div class="space-y-2">
       <label class="block text-sm font-medium text-gray-700">Calificación</label>
       <div class="flex space-x-1" id="star-rating">
@@ -133,7 +139,7 @@ import { Star, MessageSquare, Send } from 'lucide-astro';
 
   // Form submission
   if (feedbackForm) {
-    feedbackForm.addEventListener('submit', (e) => {
+    feedbackForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
       if (currentRating === 0) {
@@ -144,13 +150,71 @@ import { Star, MessageSquare, Send } from 'lucide-astro';
       const formData = new FormData(feedbackForm as HTMLFormElement);
       const comment = formData.get('comment') as string;
 
-      // Simulate API call
-      setTimeout(() => {
+      // Obtener el reportId de la URL o del atributo data
+      const reportId = (feedbackForm as HTMLFormElement).dataset.reportId || getReportIdFromURL();
+
+      console.log('🔍 Debug - reportId obtenido:', reportId);
+      console.log('🔍 Debug - dataset.reportId:', (feedbackForm as HTMLFormElement).dataset.reportId);
+      console.log('🔍 Debug - URL actual:', window.location.href);
+
+      if (!reportId) {
+        alert('Error: No se pudo identificar el reporte. Revisa la consola (F12) para más detalles.');
+        console.error('❌ No se encontró reportId');
+        return;
+      }
+
+      // Enviar feedback al backend
+      try {
+        const url = `http://localhost:3000/api/reports/${reportId}/feedback`;
+        console.log('📤 Enviando feedback a:', url);
+        console.log('📤 Datos:', { rating: currentRating, comment: comment || undefined });
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            rating: currentRating,
+            comment: comment || undefined,
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Error al enviar feedback');
+        }
+
+        const result = await response.json();
+        console.log('✅ Feedback enviado:', result);
+
+        // Mostrar mensaje de éxito
         if (feedbackForm && successDiv) {
           feedbackForm.classList.add('hidden');
           successDiv.classList.remove('hidden');
         }
-      }, 500);
+      } catch (error) {
+        console.error('❌ Error al enviar feedback:', error);
+        alert('Hubo un error al enviar tu feedback. Por favor intenta de nuevo.');
+      }
     });
+  }
+
+  // Función para obtener el reportId de la URL
+  function getReportIdFromURL(): string | null {
+    // Opción 1: De la URL como parámetro ?reportId=xxx
+    const urlParams = new URLSearchParams(window.location.search);
+    const reportIdParam = urlParams.get('reportId');
+    if (reportIdParam) return reportIdParam;
+
+    // Opción 2: Del pathname /report/xxx
+    const pathMatch = window.location.pathname.match(/\/report\/([a-f0-9-]+)/i);
+    if (pathMatch) return pathMatch[1];
+
+    // Opción 3: De un elemento con id="report-id"
+    const reportIdElement = document.getElementById('report-id');
+    if (reportIdElement) return reportIdElement.textContent?.trim() || null;
+
+    return null;
   }
 </script>

@@ -1,0 +1,198 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+// Enable server-side rendering for this dynamic route
+export const prerender = false;
+---
+
+<Layout title="Reporte - OlasPP">
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 py-20 px-4">
+    <div class="max-w-4xl mx-auto">
+      <!-- Loading State -->
+      <div id="loading" class="text-center py-12">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+        <p class="mt-4 text-gray-600">Cargando reporte...</p>
+      </div>
+
+      <!-- Error State -->
+      <div id="error" class="hidden bg-red-50 border-2 border-red-200 rounded-xl p-8 text-center">
+        <h2 class="text-2xl font-bold text-red-800 mb-4">Reporte no encontrado</h2>
+        <p class="text-red-600 mb-6">El reporte que buscas no existe o fue eliminado.</p>
+        <a href="/" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors">
+          Volver al inicio
+        </a>
+      </div>
+
+      <!-- Report Content -->
+      <div id="report-content" class="hidden bg-white rounded-2xl shadow-lg p-8">
+        <!-- Content will be inserted here dynamically -->
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
+
+  async function loadReport() {
+    const reportId = window.location.pathname.split('/').pop();
+
+    if (!reportId) {
+      showError();
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/profile/reports/${reportId}`);
+      const result = await response.json();
+
+      if (!result.success) {
+        showError();
+        return;
+      }
+
+      displayReport(result.data);
+    } catch (error) {
+      console.error('Error loading report:', error);
+      showError();
+    }
+  }
+
+  function showError() {
+    document.getElementById('loading')!.classList.add('hidden');
+    document.getElementById('error')!.classList.remove('hidden');
+  }
+
+  function displayReport(report: any) {
+    const loadingDiv = document.getElementById('loading')!;
+    const contentDiv = document.getElementById('report-content')!;
+
+    loadingDiv.classList.add('hidden');
+    contentDiv.classList.remove('hidden');
+
+    const ai = report.ai_analysis || {};
+    const date = new Date(report.created_at);
+    const rating = ai.rating || 3;
+    const stars = '⭐'.repeat(rating);
+    const ratingLabels = ['Muy Malo', 'Malo', 'Regular', 'Bueno', 'Excelente'];
+    const ratingText = ratingLabels[rating - 1] || 'Regular';
+
+    const spotName = report.spot_id.replace(/_/g, ' ').toUpperCase();
+
+    contentDiv.innerHTML = `
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl p-6 text-white mb-6">
+        <div class="flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <h1 class="text-3xl font-bold mb-2">Reporte de Surf</h1>
+            <p class="text-blue-100"><strong>Ubicación:</strong> ${spotName}</p>
+          </div>
+          <div class="text-right">
+            <p class="text-sm text-blue-100 mb-1">Generado el</p>
+            <p class="text-lg font-semibold">${date.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Best Day -->
+      ${ai.best_day ? `
+      <div class="bg-gradient-to-r from-green-500 to-teal-500 rounded-xl p-6 text-white mb-6 border-4 border-green-300">
+        <div class="flex items-start space-x-4">
+          <div class="text-4xl">🏆</div>
+          <div class="flex-1">
+            <h2 class="text-xl font-bold mb-2">Mejor Día para Surfear</h2>
+            <p class="text-2xl font-bold mb-2">${ai.best_day}</p>
+            <p class="text-green-50">${ai.summary || 'Condiciones óptimas detectadas'}</p>
+          </div>
+        </div>
+      </div>
+      ` : ''}
+
+      <!-- Rating -->
+      <div class="bg-blue-50 rounded-xl p-6 mb-6 border-2 border-blue-200">
+        <h3 class="font-semibold text-blue-900 mb-3 flex items-center">
+          <span class="text-xl mr-2">⭐</span> Calificación General
+        </h3>
+        <p class="text-3xl">${stars} <span class="text-lg font-semibold text-gray-700">(${ratingText})</span></p>
+      </div>
+
+      <!-- Conditions -->
+      ${ai.morning && ai.afternoon ? `
+      <div class="bg-gray-100 rounded-xl p-6 mb-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">⏰ Condiciones por Horario</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-lg p-6 border-2 border-orange-200">
+            <h4 class="font-semibold text-orange-900 mb-3">🌅 Mañana (6:00 - 12:00)</h4>
+            <div class="space-y-2 text-sm">
+              <p><strong>Altura de olas:</strong> ${ai.morning.wave_height}</p>
+              <p><strong>Dirección del swell:</strong> ${ai.morning.swell_direction}</p>
+              <p><strong>Viento:</strong> ${ai.morning.wind_speed} (${ai.morning.wind_direction})</p>
+              <p><strong>Condiciones:</strong> ${ai.morning.conditions}</p>
+              <p class="text-gray-700 mt-3 pt-3 border-t border-orange-200 italic">${ai.morning.explanation}</p>
+            </div>
+          </div>
+
+          <div class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-6 border-2 border-blue-200">
+            <h4 class="font-semibold text-blue-900 mb-3">🌆 Tarde (12:00 - 18:00)</h4>
+            <div class="space-y-2 text-sm">
+              <p><strong>Altura de olas:</strong> ${ai.afternoon.wave_height}</p>
+              <p><strong>Dirección del swell:</strong> ${ai.afternoon.swell_direction}</p>
+              <p><strong>Viento:</strong> ${ai.afternoon.wind_speed} (${ai.afternoon.wind_direction})</p>
+              <p><strong>Condiciones:</strong> ${ai.afternoon.conditions}</p>
+              <p class="text-gray-700 mt-3 pt-3 border-t border-blue-200 italic">${ai.afternoon.explanation}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      ` : ''}
+
+      <!-- Best Time -->
+      ${ai.best_time ? `
+      <div class="bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg p-6 text-white mb-6">
+        <h4 class="font-semibold mb-2 flex items-center">
+          <span class="text-2xl mr-2">⏰</span>
+          <span>Mejor horario: ${ai.best_time}</span>
+        </h4>
+        <p class="ml-8">${ai.best_time_reason || 'Condiciones óptimas'}</p>
+      </div>
+      ` : ''}
+
+      <!-- Actions -->
+      <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+        <a href="/" class="text-blue-600 hover:text-blue-700 font-medium">
+          ← Volver al inicio
+        </a>
+        <button
+          onclick="shareReport()"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors flex items-center space-x-2"
+        >
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+          </svg>
+          <span>Compartir</span>
+        </button>
+      </div>
+    `;
+  }
+
+  function shareReport() {
+    const url = window.location.href;
+    if (navigator.share) {
+      navigator.share({
+        title: 'Reporte de Surf - OlasPP',
+        text: 'Mira este reporte de condiciones de surf',
+        url: url
+      }).catch(err => console.log('Error sharing:', err));
+    } else {
+      navigator.clipboard.writeText(url);
+      alert('¡Enlace copiado al portapapeles!');
+    }
+  }
+
+  // Make function global
+  window.shareReport = shareReport;
+
+  // Load report on page load
+  loadReport();
+</script>
+</Layout>

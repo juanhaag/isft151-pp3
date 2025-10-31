@@ -30,6 +30,9 @@ export class Report {
   @Column({ type: 'text', nullable: true })
   user_preferences?: string;
 
+  @Column({ type: 'int', nullable: true })
+  user_id?: number;
+
   @CreateDateColumn()
   created_at!: Date;
 

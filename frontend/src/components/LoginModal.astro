@@ -112,15 +112,15 @@ import { X, Mail, Lock, User } from 'lucide-astro';
 
     <form id="register-form" class="space-y-6">
       <div class="space-y-2">
-        <label for="reg-name" class="block text-sm font-medium text-gray-700">
-          Nombre completo
+        <label for="reg-username" class="block text-sm font-medium text-gray-700">
+          Nombre de usuario
         </label>
         <div class="relative">
           <input
             type="text"
-            id="reg-name"
-            name="name"
-            placeholder="Juan Pérez"
+            id="reg-username"
+            name="username"
+            placeholder="juanperez"
             class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
             required
           />
@@ -182,8 +182,16 @@ import { X, Mail, Lock, User } from 'lucide-astro';
 </div>
 
 <script>
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
+  const endpoints = {
+    auth: {
+      login: `${API_URL}/api/auth/login`,
+      register: `${API_URL}/api/auth/register`
+    }
+  };
+
   const modal = document.getElementById('login-modal');
-  const loginContainer = modal?.children[0];
+  const loginContainer = modal ? modal.children[0] : null;
   const registerContainer = document.getElementById('register-form-container');
   const loginForm = document.getElementById('login-form');
   const registerForm = document.getElementById('register-form');
@@ -210,14 +218,12 @@ import { X, Mail, Lock, User } from 'lucide-astro';
     });
   });
 
-  // Close on backdrop click
   modal?.addEventListener('click', (e) => {
     if (e.target === modal) {
       modal.classList.add('hidden');
     }
   });
 
-  // Switch between login and register
   document.getElementById('show-register')?.addEventListener('click', showRegister);
   document.getElementById('show-login')?.addEventListener('click', showLogin);
 
@@ -231,51 +237,83 @@ import { X, Mail, Lock, User } from 'lucide-astro';
     registerContainer?.classList.remove('hidden');
   }
 
-  // Form submissions
-  loginForm?.addEventListener('submit', (e) => {
+  loginForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const formData = new FormData(loginForm as HTMLFormElement);
     const email = formData.get('email');
     const password = formData.get('password');
 
-    // Simulate login
-    setTimeout(() => {
+    try {
+      const response = await fetch(endpoints.auth.login, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al iniciar sesión');
+      }
+
+      const data = await response.json();
+      console.log('✅ Login response:', data);
+
+      if (data.token) {
+        localStorage.setItem('authToken', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        console.log('💾 User saved to localStorage:', data.user);
+
+        // Dispatch event to notify Header component
+        console.log('📢 Dispatching userLoggedIn event');
+        window.dispatchEvent(new CustomEvent('userLoggedIn'));
+        console.log('✅ Event dispatched');
+      }
+
       if (loginForm && loginSuccess) {
         loginForm.classList.add('hidden');
         loginSuccess.classList.remove('hidden');
 
-        // Update header button
-        const headerButton = document.getElementById('login-button');
-        if (headerButton) {
-          headerButton.innerHTML = `
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-            </svg>
-            <span>${email?.toString().split('@')[0] || 'Usuario'}</span>
-          `;
-          headerButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-          headerButton.classList.add('bg-green-600', 'hover:bg-green-700');
-        }
-
+        // Reload page after 1.5 seconds to update UI
         setTimeout(() => {
-          modal?.classList.add('hidden');
-        }, 2000);
+          window.location.reload();
+        }, 1500);
       }
-    }, 1000);
+    } catch (error) {
+      console.error('Login error:', error);
+      alert('Error al iniciar sesión. Por favor, verifica tus credenciales.');
+    }
   });
 
-  registerForm?.addEventListener('submit', (e) => {
+  registerForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const formData = new FormData(registerForm as HTMLFormElement);
-    const name = formData.get('name');
+    const username = formData.get('username');
     const email = formData.get('email');
+    const password = formData.get('password');
 
-    // Simulate registration
-    setTimeout(() => {
+    try {
+      // Call the API
+      const response = await fetch(endpoints.auth.register, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, email, password }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al crear la cuenta');
+      }
+
+      const data = await response.json();
       alert('¡Cuenta creada exitosamente! Ahora puedes iniciar sesión.');
       showLogin();
-    }, 1000);
+    } catch (error) {
+      console.error('Register error:', error);
+      alert('Error al crear la cuenta. Por favor, intenta nuevamente.');
+    }
   });
 </script>

@@ -7,6 +7,7 @@ export interface IReportRepository {
   findById(id: string): Promise<Report | null>;
   findAll(limit?: number): Promise<Report[]>;
   findBySpotId(spotId: string, limit?: number): Promise<Report[]>;
+  findByUserId(userId: number, limit?: number): Promise<Report[]>;
   findRecent(limit?: number): Promise<Report[]>;
   delete(id: string): Promise<boolean>;
 }
@@ -79,6 +80,23 @@ export class ReportRepository implements IReportRepository {
     } catch (error) {
       console.error('Error finding reports by spot:', error);
       throw new Error(`Failed to find reports by spot: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  async findByUserId(userId: number, limit: number = 50): Promise<Report[]> {
+    try {
+      const reports = await this.repository.find({
+        where: { user_id: userId },
+        relations: ['spot'],
+        order: {
+          created_at: 'DESC'
+        },
+        take: limit
+      });
+      return reports;
+    } catch (error) {
+      console.error('Error finding reports by user:', error);
+      throw new Error(`Failed to find reports by user: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 

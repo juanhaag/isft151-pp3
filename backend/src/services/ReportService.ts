@@ -13,6 +13,7 @@ export interface GenerateReportRequest {
   aiProvider?: AIProviderType;
   forecastDays?: number;
   targetDate?: string; // Fecha específica en formato YYYY-MM-DD
+  userId?: number; // ID del usuario logueado (opcional)
 }
 
 export interface ReportServiceConfig {
@@ -201,7 +202,8 @@ export class ReportService {
         spot_id: spotId,
         report_text: reportText,
         weather_data: weatherData,
-        user_preferences: userPreferences
+        user_preferences: userPreferences,
+        user_id: request.userId
       });
 
       console.log(`💾 Report saved to database with ID: ${report.id}`);

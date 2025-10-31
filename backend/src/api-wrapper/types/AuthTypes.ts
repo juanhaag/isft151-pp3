@@ -40,6 +40,12 @@ export type LoginResponse =
 
 export interface LoginOutput {
   token: string;
+  user?: {
+    id: number;
+    username: string;
+    email: string;
+    created_at: string;
+  };
 }
 
 export interface LoginError {

@@ -14,7 +14,7 @@ export class ReportController {
 
   generateReport = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { spotId, userPreferences, aiProvider, forecastDays, targetDate } = req.body;
+      const { spotId, userPreferences, aiProvider, forecastDays, targetDate, userId } = req.body;
 
       if (!spotId) {
         res.status(400).json({
@@ -72,7 +72,8 @@ export class ReportController {
         userPreferences,
         aiProvider: aiProvider || AIProviderType.GEMINI,
         forecastDays: forecastDays || 7,
-        targetDate
+        targetDate,
+        userId
       };
 
       const report = await this.reportService.generateReport(request);

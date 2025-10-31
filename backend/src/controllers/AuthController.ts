@@ -50,7 +50,7 @@ export class AuthController {
       password,
     });
 
-    const output: LoginOutput = { token };
+    const output: LoginOutput = { token, user };
 
     return output;
   }
