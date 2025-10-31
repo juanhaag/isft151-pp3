@@ -115,9 +115,9 @@ function Check-EnvFile {
     $envContent = Get-Content ".env" -Raw
     $envContent = $envContent -replace 'DB_PORT=5432', 'DB_PORT=5434'
     $envContent = $envContent -replace 'DB_NAME=surfdb', 'DB_NAME=olaspp'
-    $envContent = $envContent -replace '@localhost:5432/', '@localhost:5434/'
-    $envContent = $envContent -replace '/surfdb', '/olaspp'
-    Set-Content ".env" -Value $envContent
+    $envContent = $envContent -replace 'DB_DATABASE=.*', 'DB_NAME=olaspp'
+    $envContent = $envContent -replace 'DATABASE_URL=postgresql://[^@]+@[^:]+:\d+/\w+', 'DATABASE_URL=postgresql://postgres:olaspp_password@localhost:5434/olaspp'
+    Set-Content ".env" -Value $envContent -NoNewline
     Write-Success "Configuración actualizada (puerto 5434, base de datos olaspp)"
 
     Write-Host ""

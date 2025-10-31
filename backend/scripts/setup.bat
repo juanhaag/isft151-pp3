@@ -74,7 +74,7 @@ if not exist ".env" (
 
 REM Verificar y corregir configuración de base de datos en .env
 echo [*] Verificando configuración de base de datos...
-powershell -Command "(Get-Content .env) -replace 'DB_PORT=5432', 'DB_PORT=5434' -replace 'DB_NAME=surfdb', 'DB_NAME=olaspp' -replace '@localhost:5432/', '@localhost:5434/' -replace '/surfdb', '/olaspp' | Set-Content .env"
+powershell -Command "$content = Get-Content .env -Raw; $content = $content -replace 'DB_PORT=5432', 'DB_PORT=5434'; $content = $content -replace 'DB_NAME=surfdb', 'DB_NAME=olaspp'; $content = $content -replace 'DB_DATABASE=.*', 'DB_NAME=olaspp'; $content = $content -replace 'DATABASE_URL=postgresql://[^@]+@[^:]+:\d+/\w+', 'DATABASE_URL=postgresql://postgres:olaspp_password@localhost:5434/olaspp'; Set-Content .env -Value $content -NoNewline"
 echo [OK] Configuración actualizada (puerto 5434, base de datos olaspp)
 echo.
 

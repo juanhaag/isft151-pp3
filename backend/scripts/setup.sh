@@ -110,8 +110,8 @@ check_env_file() {
     print_step "Verificando configuración de base de datos..."
     sed -i 's/DB_PORT=5432/DB_PORT=5434/g' .env
     sed -i 's/DB_NAME=surfdb/DB_NAME=olaspp/g' .env
-    sed -i 's/@localhost:5432\//@localhost:5434\//g' .env
-    sed -i 's/\/surfdb/\/olaspp/g' .env
+    sed -i 's/DB_DATABASE=.*/DB_NAME=olaspp/g' .env
+    sed -i 's|DATABASE_URL=postgresql://[^@]*@[^:]*:[0-9]*/[^[:space:]]*|DATABASE_URL=postgresql://postgres:olaspp_password@localhost:5434/olaspp|g' .env
     print_success "Configuración actualizada (puerto 5434, base de datos olaspp)"
 
     echo ""
