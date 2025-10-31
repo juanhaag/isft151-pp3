@@ -101,6 +101,28 @@ if %ERRORLEVEL% neq 0 (
 echo [OK] Docker está corriendo
 echo.
 
+REM Buscar docker-compose.vectordb.yml
+set COMPOSE_FILE=
+if exist "..\..\docker-compose.vectordb.yml" (
+    set COMPOSE_FILE=..\..\docker-compose.vectordb.yml
+) else if exist "..\docker-compose.vectordb.yml" (
+    set COMPOSE_FILE=..\docker-compose.vectordb.yml
+) else if exist "docker-compose.vectordb.yml" (
+    set COMPOSE_FILE=docker-compose.vectordb.yml
+) else (
+    echo [X] No se encontró docker-compose.vectordb.yml
+    echo [*] Buscando en directorios padres...
+    cd ..\..\
+    if exist "docker-compose.vectordb.yml" (
+        set COMPOSE_FILE=docker-compose.vectordb.yml
+    ) else (
+        echo [X] No se pudo encontrar docker-compose.vectordb.yml
+        pause
+        exit /b 1
+    )
+    cd backend\scripts
+)
+
 REM Iniciar base de datos
 echo [*] Iniciando contenedor de PostgreSQL con pgvector...
 docker ps -a | findstr "olaspp_postgres_vector" >nul 2>&1
@@ -111,12 +133,12 @@ if %ERRORLEVEL% equ 0 (
         echo [OK] El contenedor ya está corriendo
     ) else (
         echo [*] Iniciando contenedor existente...
-        docker-compose -f ..\..\docker-compose.vectordb.yml up -d
+        docker-compose -f %COMPOSE_FILE% up -d
         echo [OK] Contenedor iniciado
     )
 ) else (
     echo [*] Creando e iniciando nuevo contenedor...
-    docker-compose -f ..\..\docker-compose.vectordb.yml up -d
+    docker-compose -f %COMPOSE_FILE% up -d
     echo [OK] Contenedor creado e iniciado
 )
 echo.
@@ -206,8 +228,8 @@ echo   3. Explora los endpoints en src/routes/
 echo.
 echo 📚 Comandos útiles:
 echo   • Ver logs de DB: docker logs olaspp_postgres_vector -f
-echo   • Detener DB: docker-compose -f ..\..\docker-compose.vectordb.yml down
-echo   • Reiniciar DB: docker-compose -f ..\..\docker-compose.vectordb.yml restart
+echo   • Detener DB: docker stop olaspp_postgres_vector
+echo   • Reiniciar DB: docker restart olaspp_postgres_vector
 echo   • Ver docs: type SETUP.md
 echo.
 
