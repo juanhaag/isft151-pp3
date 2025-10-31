@@ -57,9 +57,9 @@ echo.
 
 REM Verificar archivo .env
 echo [*] Verificando archivo .env...
-if not exist ".env" (
+if not exist "../.env" (
     echo [!] Archivo .env no encontrado
-    if exist ".env.example" (
+    if exist "../.env.example" (
         echo [*] Creando .env desde .env.example...
         copy .env.example .env >nul
         echo [OK] Archivo .env creado
