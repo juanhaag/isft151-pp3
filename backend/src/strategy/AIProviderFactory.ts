@@ -1,8 +1,10 @@
 import { IAIProvider, AIProviderConfig } from './IAIProvider';
 import { GeminiProvider } from './GeminiProvider';
+import { OllamaProvider, OllamaProviderConfig } from './OllamaProvider';
 
 export enum AIProviderType {
   GEMINI = 'gemini',
+  OLLAMA = 'ollama',
   OPENAI = 'openai',
   CLAUDE = 'claude'
 }
@@ -12,6 +14,8 @@ export class AIProviderFactory {
     switch (type) {
       case AIProviderType.GEMINI:
         return new GeminiProvider(config);
+      case AIProviderType.OLLAMA:
+        return new OllamaProvider(config as OllamaProviderConfig);
       case AIProviderType.OPENAI:
         throw new Error('OpenAI provider not implemented yet');
       case AIProviderType.CLAUDE:

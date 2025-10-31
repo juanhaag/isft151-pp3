@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import dotenv from 'dotenv';
-import { Zone, Spot, Report } from '../entities';
+import { Spot, Report, User, ReportFeedback, ReportEmbedding } from '../entities';
 
 dotenv.config();
 
@@ -12,11 +12,12 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME || 'postgres',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_DATABASE || 'surfdb',
-  synchronize: process.env.NODE_ENV !== 'production', // Solo en desarrollo
+  synchronize: false, // Deshabilitado - usar migraciones en su lugar
   logging: process.env.NODE_ENV === 'development',
-  entities: [Zone, Spot, Report],
-  migrations: ['src/migrations/*.ts'],
-  subscribers: ['src/subscribers/*.ts'],
+  entities: [Spot, Report, User, ReportFeedback, ReportEmbedding],
+  migrations: [__dirname + '/../migrations/*.ts'],
+  migrationsTableName: 'migrations',
+  migrationsRun: false,
 });
 
 export const initializeDatabase = async (): Promise<void> => {
@@ -25,8 +26,10 @@ export const initializeDatabase = async (): Promise<void> => {
       await AppDataSource.initialize();
       console.log('✅ Database connection established successfully');
 
-      // Crear extensión PostGIS si no existe
+      // Crear extensiones necesarias si no existen
       await AppDataSource.query('CREATE EXTENSION IF NOT EXISTS postgis;');
+      await AppDataSource.query('CREATE EXTENSION IF NOT EXISTS vector;');
+      console.log('📦 Extensions (PostGIS, pgvector) verified');
     }
   } catch (error) {
     console.error('❌ Error during database initialization:', error);

@@ -1,44 +1,9 @@
 import 'reflect-metadata';
 import { initializeDatabase } from '../config/database';
-import { ZoneRepository } from '../repositories/ZoneRepository';
 import { SpotRepository } from '../repositories/SpotRepository';
-import { BestConditions } from '../entities';
+import { BestConditions, BadConditions } from '../entities';
 
-const zoneRepository = new ZoneRepository();
 const spotRepository = new SpotRepository();
-
-const sampleZones = [
-  {
-    name: 'Zona Sur/Mar del Plata',
-    best_conditions: {
-      swell_direction: ['S', 'SW', 'W'],
-      wind_direction: ['NE', 'E', 'SE'],
-      tide: ['Mid to High'],
-      swell_size: '1m+'
-    } as BestConditions,
-    bad_conditions: {
-      swell_direction: ['N', 'NE'],
-      wind_direction: ['S', 'SW', 'W'],
-      tide: ['Low'],
-      swell_size: '0.5m-'
-    } as BestConditions
-  },
-  {
-    name: 'Costa Norte',
-    best_conditions: {
-      swell_direction: ['N', 'NE', 'E'],
-      wind_direction: ['S', 'SW', 'W'],
-      tide: ['Mid to High'],
-      swell_size: '1.5m+'
-    } as BestConditions,
-    bad_conditions: {
-      swell_direction: ['S', 'SW'],
-      wind_direction: ['N', 'NE', 'E'],
-      tide: ['Low'],
-      swell_size: '0.8m-'
-    } as BestConditions
-  }
-];
 
 const sampleSpots = [
   {
@@ -47,7 +12,19 @@ const sampleSpots = [
     latitude: -38.574136800000005,
     display_name: 'Monte Pasubio, Quequén, Partido de Necochea, Buenos Aires, Argentina',
     zona: 'Zona Sur / Mar del Plata',
-    zona_id: 1
+    best_conditions: {
+      swell_direction: ['S', 'SW', 'W'],
+      wind_direction: ['NE', 'E', 'SE'],
+      wave_type: ['Beach break'],
+      wave_direction: ['Izquierda', 'Derecha'],
+      tide: ['Mid to High'],
+      notes: 'Beach break con oleaje consistente del sur. Funciona mejor con marea media a alta.'
+    } as BestConditions,
+    bad_conditions: {
+      swell_direction: ['N', 'NE'],
+      wind_direction: ['S', 'SW', 'W'],
+      notes: 'Vientos del sur son onshore y generan condiciones desordenadas.'
+    } as BadConditions
   },
   {
     place_id: '2',
@@ -55,7 +32,19 @@ const sampleSpots = [
     latitude: -38.0055,
     display_name: 'Playa Grande, Mar del Plata, Buenos Aires, Argentina',
     zona: 'Zona Sur / Mar del Plata',
-    zona_id: 1
+    best_conditions: {
+      swell_direction: ['S', 'SW', 'SE'],
+      wind_direction: ['N', 'NE', 'NW'],
+      wave_type: ['Beach break'],
+      wave_direction: ['Izquierda', 'Derecha'],
+      tide: ['All tides'],
+      notes: 'Playa urbana popular. Funciona en todas las mareas.'
+    } as BestConditions,
+    bad_conditions: {
+      swell_direction: ['N'],
+      wind_direction: ['S', 'SE', 'SW'],
+      notes: 'Vientos del sur y sudeste son onshore.'
+    } as BadConditions
   },
   {
     place_id: '3',
@@ -63,7 +52,19 @@ const sampleSpots = [
     latitude: -38.0177,
     display_name: 'Miramar, Buenos Aires, Argentina',
     zona: 'Costa Norte',
-    zona_id: 2
+    best_conditions: {
+      swell_direction: ['E', 'SE', 'S'],
+      wind_direction: ['W', 'NW', 'SW'],
+      wave_type: ['Beach break'],
+      wave_direction: ['Izquierda', 'Derecha'],
+      tide: ['Mid to High'],
+      notes: 'Beach break de la costa norte. Mejor con marea media a alta.'
+    } as BestConditions,
+    bad_conditions: {
+      swell_direction: ['N', 'NE'],
+      wind_direction: ['E', 'SE'],
+      notes: 'Vientos del este son onshore y crean condiciones difíciles.'
+    } as BadConditions
   }
 ];
 
@@ -73,22 +74,6 @@ async function seedDatabase() {
 
     // Inicializar conexión a base de datos
     await initializeDatabase();
-
-    console.log('📊 Creating zones...');
-    for (const zoneData of sampleZones) {
-      try {
-        const existingZone = await zoneRepository.findByName(zoneData.name);
-        if (existingZone) {
-          console.log(`⚠️  Zone already exists: ${zoneData.name}`);
-          continue;
-        }
-
-        const zone = await zoneRepository.create(zoneData as any);
-        console.log(`✅ Created zone: ${zone.name} (ID: ${zone.id})`);
-      } catch (error) {
-        console.error(`❌ Error creating zone ${zoneData.name}:`, error);
-      }
-    }
 
     console.log('📍 Creating spots...');
     for (const spotData of sampleSpots) {
@@ -105,9 +90,8 @@ async function seedDatabase() {
           location: `POINT(${spotData.longitude} ${spotData.latitude})`,
           display_name: spotData.display_name,
           zona: spotData.zona,
-          zona_id: spotData.zona_id,
-          latitude: spotData.latitude,
-          longitude: spotData.longitude
+          best_conditions: spotData.best_conditions,
+          bad_conditions: spotData.bad_conditions
         };
 
         const spot = await spotRepository.create(spotToCreate);
@@ -119,15 +103,9 @@ async function seedDatabase() {
 
     // Verificar datos creados
     console.log('🔍 Verifying seeded data...');
-    const zones = await zoneRepository.findAll();
     const spots = await spotRepository.findAll();
 
-    console.log(`📊 Total zones: ${zones.length}`);
     console.log(`📍 Total spots: ${spots.length}`);
-
-    zones.forEach(zone => {
-      console.log(`   • Zone: ${zone.name} (${zone.spots?.length || 0} spots)`);
-    });
 
     spots.forEach(spot => {
       console.log(`   • Spot: ${spot.display_name} (Zone: ${spot.zona})`);
@@ -156,33 +134,30 @@ export async function createExampleData() {
   try {
     await initializeDatabase();
 
-    // Crear zona de ejemplo adicional
-    const newZone = await zoneRepository.create({
-      name: 'Costa Atlántica',
+    // Crear spot de ejemplo
+    const newSpot = await spotRepository.create({
+      place_id: 'example_spot',
+      location: 'POINT(-56.7 -37.8)',
+      display_name: 'Playa Ejemplo, Costa Atlántica',
+      zona: 'Costa Atlántica',
       best_conditions: {
         swell_direction: ['E', 'SE', 'S'],
         wind_direction: ['W', 'NW', 'N'],
+        wave_type: ['Beach break'],
+        wave_direction: ['Izquierda', 'Derecha'],
         tide: ['High'],
-        swell_size: '2m+'
+        notes: 'Spot de ejemplo con buenas condiciones en marea alta.'
+      },
+      bad_conditions: {
+        swell_direction: ['N'],
+        wind_direction: ['E', 'SE'],
+        notes: 'Evitar con vientos del este.'
       }
-    } as any);
-
-    console.log(`✅ Created example zone: ${newZone.name}`);
-
-    // Crear spot de ejemplo
-    const newSpot = await spotRepository.create({
-  place_id: 'example_spot',
-  location: 'POINT(-56.7 -37.8)',
-  display_name: 'Playa Ejemplo, Costa Atlántica',
-  zona: 'Costa Atlántica',
-  zona_id: newZone.id,
-  latitude: -37.8,
-  longitude: -56.7
     });
 
     console.log(`✅ Created example spot: ${newSpot.display_name}`);
 
-    return { zone: newZone, spot: newSpot };
+    return { spot: newSpot };
   } catch (error) {
     console.error('Error creating example data:', error);
     throw error;

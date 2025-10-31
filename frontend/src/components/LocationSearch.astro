@@ -1,0 +1,283 @@
+---
+import { Search, MapPin } from 'lucide-astro';
+---
+
+<div class="space-y-2">
+  <label for="location-search" class="block text-sm font-medium text-gray-700">
+    Buscar spot de surf
+  </label>
+  <div class="relative">
+    <input
+      type="text"
+      id="location-search"
+      placeholder="Escribe para buscar un spot..."
+      class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+      autocomplete="off"
+    />
+    <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+
+    <!-- Hidden input para guardar el ID del spot seleccionado -->
+    <input type="hidden" id="location-value" name="location" required />
+
+    <div id="suggestions" class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg hidden z-10 max-h-64 overflow-y-auto mt-1">
+      <div id="suggestions-loading" class="p-4 text-center text-gray-500 hidden">
+        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+        <p class="mt-2 text-sm">Cargando spots...</p>
+      </div>
+      <div id="suggestions-list"></div>
+      <div id="suggestions-empty" class="p-4 text-center text-gray-500 hidden">
+        <p class="text-sm">No se encontraron spots</p>
+      </div>
+    </div>
+  </div>
+  <p id="selected-spot-info" class="text-xs text-gray-500 hidden"></p>
+</div>
+
+<script>
+  const locationInput = document.getElementById('location-search') as HTMLInputElement;
+  const locationValue = document.getElementById('location-value') as HTMLInputElement;
+  const suggestionsDiv = document.getElementById('suggestions');
+  const suggestionsList = document.getElementById('suggestions-list');
+  const suggestionsLoading = document.getElementById('suggestions-loading');
+  const suggestionsEmpty = document.getElementById('suggestions-empty');
+  const selectedSpotInfo = document.getElementById('selected-spot-info');
+
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
+
+  let allSpots: any[] = [];
+  let selectedSpot: any = null;
+  let debounceTimer: number;
+
+  // Fetch spots from API
+  async function loadSpots() {
+    try {
+      suggestionsLoading?.classList.remove('hidden');
+
+      const response = await fetch(`${API_URL}/api/spots`);
+      const result = await response.json();
+      console.log('Spots API response:', result);
+      if (result.success && result.data) {
+        allSpots = result.data;
+        console.log(`✅ Loaded ${allSpots.length} spots from API`);
+      } else {
+        console.error('❌ Error loading spots:', result.error);
+        allSpots = [];
+      }
+    } catch (error) {
+      console.error('❌ Error fetching spots:', error);
+      allSpots = [];
+    } finally {
+      suggestionsLoading?.classList.add('hidden');
+    }
+  }
+
+  // Filter spots based on search query
+  function filterSpots(query: string) {
+    if (!query || query.length < 2) {
+      return allSpots.slice(0, 10); // Show first 10 if no query
+    }
+
+    const lowerQuery = query.toLowerCase();
+    return allSpots.filter(spot =>
+      spot.display_name?.toLowerCase().includes(lowerQuery) ||
+      spot.zona?.toLowerCase().includes(lowerQuery)
+    );
+  }
+
+  // Render suggestions
+  function renderSuggestions(spots: any[]) {
+    if (!suggestionsList) return;
+
+    if (spots.length === 0) {
+      suggestionsList.innerHTML = '';
+      suggestionsEmpty?.classList.remove('hidden');
+      return;
+    }
+
+    suggestionsEmpty?.classList.add('hidden');
+
+    suggestionsList.innerHTML = spots
+      .map(spot => `
+        <div
+          class="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 flex items-start space-x-3 transition-colors"
+          data-spot-id="${spot.place_id}"
+          data-spot-name="${spot.display_name}"
+          data-spot-zona="${spot.zona || ''}"
+        >
+          <svg class="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          </svg>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-gray-900 truncate">${spot.display_name}</p>
+            ${spot.zona ? `<p class="text-xs text-gray-500">${spot.zona}</p>` : ''}
+          </div>
+        </div>
+      `)
+      .join('');
+
+    // Add click handlers
+    suggestionsList.querySelectorAll('[data-spot-id]').forEach(item => {
+      item.addEventListener('click', () => {
+        const spotId = item.getAttribute('data-spot-id');
+        const spotName = item.getAttribute('data-spot-name');
+        const spotZona = item.getAttribute('data-spot-zona');
+
+        selectSpot(spotId, spotName, spotZona);
+      });
+    });
+  }
+
+  // Select a spot
+  function selectSpot(id: string | null, name: string | null, zona: string | null) {
+    if (!id || !name) return;
+
+    selectedSpot = allSpots.find(s => s.place_id === id);
+
+    locationInput.value = name;
+    locationValue.value = id;
+
+    if (suggestionsDiv) {
+      suggestionsDiv.classList.add('hidden');
+    }
+
+    if (selectedSpotInfo) {
+      selectedSpotInfo.textContent = `📍 ${name}${zona ? ` - ${zona}` : ''}`;
+      selectedSpotInfo.classList.remove('hidden');
+    }
+
+    // Trigger change event
+    locationValue.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  // Handle input
+  if (locationInput && suggestionsDiv) {
+    // Load spots on page load
+    loadSpots();
+
+    // Show suggestions on focus
+    locationInput.addEventListener('focus', () => {
+      if (allSpots.length > 0) {
+        const matches = filterSpots(locationInput.value);
+        renderSuggestions(matches);
+        suggestionsDiv.classList.remove('hidden');
+      } else {
+        loadSpots().then(() => {
+          const matches = filterSpots(locationInput.value);
+          renderSuggestions(matches);
+          suggestionsDiv.classList.remove('hidden');
+        });
+      }
+    });
+
+    // Filter on input
+    locationInput.addEventListener('input', (e) => {
+      clearTimeout(debounceTimer);
+      const query = (e.target as HTMLInputElement).value;
+
+      // Clear selection if user types
+      if (selectedSpot && query !== selectedSpot.display_name) {
+        selectedSpot = null;
+        locationValue.value = '';
+        selectedSpotInfo?.classList.add('hidden');
+      }
+
+      debounceTimer = window.setTimeout(() => {
+        if (allSpots.length === 0) {
+          loadSpots().then(() => {
+            const matches = filterSpots(query);
+            renderSuggestions(matches);
+            suggestionsDiv.classList.remove('hidden');
+          });
+        } else {
+          const matches = filterSpots(query);
+          renderSuggestions(matches);
+
+          if (query.length > 0) {
+            suggestionsDiv.classList.remove('hidden');
+          } else {
+            suggestionsDiv.classList.add('hidden');
+          }
+        }
+      }, 300);
+    });
+
+    // Handle keyboard navigation
+    locationInput.addEventListener('keydown', (e) => {
+      const items = suggestionsList?.querySelectorAll('[data-spot-id]');
+      if (!items || items.length === 0) return;
+
+      const activeItem = document.querySelector('[data-spot-id].bg-blue-50');
+      let currentIndex = Array.from(items).indexOf(activeItem as Element);
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        currentIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
+        highlightItem(items, currentIndex);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        currentIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+        highlightItem(items, currentIndex);
+      } else if (e.key === 'Enter' && currentIndex >= 0) {
+        e.preventDefault();
+        const item = items[currentIndex];
+        const spotId = item.getAttribute('data-spot-id');
+        const spotName = item.getAttribute('data-spot-name');
+        const spotZona = item.getAttribute('data-spot-zona');
+        selectSpot(spotId, spotName, spotZona);
+      } else if (e.key === 'Escape') {
+        suggestionsDiv.classList.add('hidden');
+      }
+    });
+
+    // Close on click outside
+    document.addEventListener('click', (e) => {
+      if (!locationInput.contains(e.target as Node) && !suggestionsDiv.contains(e.target as Node)) {
+        suggestionsDiv.classList.add('hidden');
+      }
+    });
+  }
+
+  function highlightItem(items: NodeListOf<Element>, index: number) {
+    items.forEach((item, i) => {
+      if (i === index) {
+        item.classList.add('bg-blue-50');
+        item.scrollIntoView({ block: 'nearest' });
+      } else {
+        item.classList.remove('bg-blue-50');
+      }
+    });
+  }
+
+  // Validate on form submit
+  const form = document.getElementById('surf-report-form');
+  if (form && locationValue) {
+    form.addEventListener('submit', (e) => {
+      if (!locationValue.value) {
+        e.preventDefault();
+        alert('Por favor selecciona un spot de la lista');
+        locationInput.focus();
+      }
+    });
+  }
+</script>
+
+<style>
+  #suggestions-list::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  #suggestions-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+
+  #suggestions-list::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 3px;
+  }
+
+  #suggestions-list::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+  }
+</style>

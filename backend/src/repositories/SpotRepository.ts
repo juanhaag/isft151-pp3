@@ -3,10 +3,10 @@ import { Spot } from '../entities';
 import AppDataSource from '../config/database';
 
 export interface ISpotRepository {
-  create(spotData: Omit<Spot, 'created_at' | 'updated_at' | 'zone' | 'reports' | 'setLocationFromCoordinates'>): Promise<Spot>;
+  create(spotData: Omit<Spot, 'created_at' | 'updated_at' | 'reports' | 'latitude' | 'longitude' | 'setLocationFromCoordinates'>): Promise<Spot>;
   findById(placeId: string): Promise<Spot | null>;
   findAll(): Promise<Spot[]>;
-  findByZone(zonaId: number): Promise<Spot[]>;
+  findByZona(zonaName: string): Promise<Spot[]>;
   delete(placeId: string): Promise<boolean>;
   findNearby(latitude: number, longitude: number, radiusKm: number): Promise<Spot[]>;
 }
@@ -18,19 +18,23 @@ export class SpotRepository implements ISpotRepository {
     this.repository = AppDataSource.getRepository(Spot);
   }
 
-  async create(spotData: Omit<Spot, 'created_at' | 'updated_at' | 'zone' | 'reports' | 'setLocationFromCoordinates'>): Promise<Spot> {
+  async create(spotData: Omit<Spot, 'created_at' | 'updated_at' | 'reports' | 'latitude' | 'longitude' | 'setLocationFromCoordinates'>): Promise<Spot> {
     try {
       // Use raw query for geometry insertion to avoid TypeORM geometry issues
       console.log('spotData:', spotData);
-      
-      // Construct WKT POINT from lat/lon
-    const wktPoint = `POINT(${spotData.longitude} ${spotData.latitude})`;
 
       const result = await this.repository.query(`
-        INSERT INTO spots (place_id, location, display_name, zona, zona_id)
-        VALUES ($1, ST_GeomFromText($2, 4326), $3, $4, $5)
+        INSERT INTO spots (place_id, location, display_name, zona, best_conditions, bad_conditions)
+        VALUES ($1, ST_GeomFromText($2, 4326), $3, $4, $5, $6)
         RETURNING *
-      `, [spotData.place_id, wktPoint, spotData.display_name, spotData.zona, spotData.zona_id]);
+      `, [
+        spotData.place_id,
+        spotData.location,
+        spotData.display_name,
+        spotData.zona,
+        JSON.stringify(spotData.best_conditions),
+        spotData.bad_conditions ? JSON.stringify(spotData.bad_conditions) : null
+      ]);
 
       return result[0];
     } catch (error) {
@@ -43,7 +47,7 @@ export class SpotRepository implements ISpotRepository {
     try {
       const spot = await this.repository.findOne({
         where: { place_id: placeId },
-        relations: ['zone', 'reports']
+        relations: ['reports']
       });
       return spot;
     } catch (error) {
@@ -55,7 +59,6 @@ export class SpotRepository implements ISpotRepository {
   async findAll(): Promise<Spot[]> {
     try {
       const spots = await this.repository.find({
-        relations: ['zone'],
         order: {
           display_name: 'ASC'
         }
@@ -67,19 +70,18 @@ export class SpotRepository implements ISpotRepository {
     }
   }
 
-  async findByZone(zonaId: number): Promise<Spot[]> {
+  async findByZona(zonaName: string): Promise<Spot[]> {
     try {
       const spots = await this.repository.find({
-        where: { zona_id: zonaId },
-        relations: ['zone'],
+        where: { zona: zonaName },
         order: {
           display_name: 'ASC'
         }
       });
       return spots;
     } catch (error) {
-      console.error('Error finding spots by zone:', error);
-      throw new Error(`Failed to find spots by zone: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Error finding spots by zona:', error);
+      throw new Error(`Failed to find spots by zona: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 

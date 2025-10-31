@@ -1,0 +1,319 @@
+---
+import { X, Mail, Lock, User } from 'lucide-astro';
+---
+
+<div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 relative">
+    <button
+      id="close-modal"
+      class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+    >
+      <X class="h-6 w-6" />
+    </button>
+
+    <div class="text-center mb-8">
+      <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <User class="h-8 w-8 text-blue-600" />
+      </div>
+      <h2 class="text-2xl font-bold text-gray-900">Iniciar Sesión</h2>
+      <p class="text-gray-600 mt-2">Accede a tu cuenta para guardar reportes</p>
+    </div>
+
+    <form id="login-form" class="space-y-6">
+      <div class="space-y-2">
+        <label for="email" class="block text-sm font-medium text-gray-700">
+          Email
+        </label>
+        <div class="relative">
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="tu@email.com"
+            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            required
+          />
+          <Mail class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <label for="password" class="block text-sm font-medium text-gray-700">
+          Contraseña
+        </label>
+        <div class="relative">
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="••••••••"
+            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            required
+          />
+          <Lock class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <label class="flex items-center">
+          <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+          <span class="ml-2 text-sm text-gray-600">Recordarme</span>
+        </label>
+        <a href="#" class="text-sm text-blue-600 hover:text-blue-500">
+          ¿Olvidaste tu contraseña?
+        </a>
+      </div>
+
+      <button
+        type="submit"
+        class="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200"
+      >
+        Iniciar Sesión
+      </button>
+    </form>
+
+    <div class="mt-6 text-center">
+      <p class="text-gray-600">
+        ¿No tienes una cuenta?
+        <button id="show-register" class="text-blue-600 hover:text-blue-500 font-medium">
+          Regístrate aquí
+        </button>
+      </p>
+    </div>
+
+    <div id="login-success" class="hidden">
+      <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mt-4">
+        <div class="flex items-center space-x-2">
+          <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+          </svg>
+          <span class="font-medium">¡Bienvenido de vuelta!</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Register Form (Initially Hidden) -->
+  <div id="register-form-container" class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 relative hidden">
+    <button
+      id="close-register"
+      class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+    >
+      <X class="h-6 w-6" />
+    </button>
+
+    <div class="text-center mb-8">
+      <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <User class="h-8 w-8 text-green-600" />
+      </div>
+      <h2 class="text-2xl font-bold text-gray-900">Crear Cuenta</h2>
+      <p class="text-gray-600 mt-2">Únete a la comunidad de surfistas</p>
+    </div>
+
+    <form id="register-form" class="space-y-6">
+      <div class="space-y-2">
+        <label for="reg-username" class="block text-sm font-medium text-gray-700">
+          Nombre de usuario
+        </label>
+        <div class="relative">
+          <input
+            type="text"
+            id="reg-username"
+            name="username"
+            placeholder="juanperez"
+            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            required
+          />
+          <User class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <label for="reg-email" class="block text-sm font-medium text-gray-700">
+          Email
+        </label>
+        <div class="relative">
+          <input
+            type="email"
+            id="reg-email"
+            name="email"
+            placeholder="tu@email.com"
+            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            required
+          />
+          <Mail class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <label for="reg-password" class="block text-sm font-medium text-gray-700">
+          Contraseña
+        </label>
+        <div class="relative">
+          <input
+            type="password"
+            id="reg-password"
+            name="password"
+            placeholder="••••••••"
+            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            required
+          />
+          <Lock class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        class="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200"
+      >
+        Crear Cuenta
+      </button>
+    </form>
+
+    <div class="mt-6 text-center">
+      <p class="text-gray-600">
+        ¿Ya tienes una cuenta?
+        <button id="show-login" class="text-green-600 hover:text-green-500 font-medium">
+          Inicia sesión aquí
+        </button>
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
+  const endpoints = {
+    auth: {
+      login: `${API_URL}/api/auth/login`,
+      register: `${API_URL}/api/auth/register`
+    }
+  };
+
+  const modal = document.getElementById('login-modal');
+  const loginContainer = modal ? modal.children[0] : null;
+  const registerContainer = document.getElementById('register-form-container');
+  const loginForm = document.getElementById('login-form');
+  const registerForm = document.getElementById('register-form');
+  const loginSuccess = document.getElementById('login-success');
+
+  // Open modal
+  const loginButton = document.getElementById('login-button');
+  if (loginButton) {
+    loginButton.addEventListener('click', () => {
+      modal?.classList.remove('hidden');
+      showLogin();
+    });
+  }
+
+  // Close modal functions
+  const closeButtons = [
+    document.getElementById('close-modal'),
+    document.getElementById('close-register')
+  ];
+
+  closeButtons.forEach(button => {
+    button?.addEventListener('click', () => {
+      modal?.classList.add('hidden');
+    });
+  });
+
+  modal?.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.classList.add('hidden');
+    }
+  });
+
+  document.getElementById('show-register')?.addEventListener('click', showRegister);
+  document.getElementById('show-login')?.addEventListener('click', showLogin);
+
+  function showLogin() {
+    loginContainer?.classList.remove('hidden');
+    registerContainer?.classList.add('hidden');
+  }
+
+  function showRegister() {
+    loginContainer?.classList.add('hidden');
+    registerContainer?.classList.remove('hidden');
+  }
+
+  loginForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(loginForm as HTMLFormElement);
+    const email = formData.get('email');
+    const password = formData.get('password');
+
+    try {
+      const response = await fetch(endpoints.auth.login, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al iniciar sesión');
+      }
+
+      const data = await response.json();
+      console.log('✅ Login response:', data);
+
+      if (data.token) {
+        localStorage.setItem('authToken', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        console.log('💾 User saved to localStorage:', data.user);
+
+        // Dispatch event to notify Header component
+        console.log('📢 Dispatching userLoggedIn event');
+        window.dispatchEvent(new CustomEvent('userLoggedIn'));
+        console.log('✅ Event dispatched');
+      }
+
+      if (loginForm && loginSuccess) {
+        loginForm.classList.add('hidden');
+        loginSuccess.classList.remove('hidden');
+
+        // Reload page after 1.5 seconds to update UI
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      alert('Error al iniciar sesión. Por favor, verifica tus credenciales.');
+    }
+  });
+
+  registerForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(registerForm as HTMLFormElement);
+    const username = formData.get('username');
+    const email = formData.get('email');
+    const password = formData.get('password');
+
+    try {
+      // Call the API
+      const response = await fetch(endpoints.auth.register, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, email, password }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al crear la cuenta');
+      }
+
+      const data = await response.json();
+      alert('¡Cuenta creada exitosamente! Ahora puedes iniciar sesión.');
+      showLogin();
+    } catch (error) {
+      console.error('Register error:', error);
+      alert('Error al crear la cuenta. Por favor, intenta nuevamente.');
+    }
+  });
+</script>

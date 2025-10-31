@@ -4,27 +4,29 @@ export interface Point {
 }
 
 export interface BestConditions {
-  swell_direction: string[];
-  wind_direction: string[];
-  tide: string[];
-  swell_size: string;
+  swell_direction?: string[];
+  wind_direction?: string[];
+  wave_type?: string[];
+  wave_direction?: string[];
+  tide?: string[];
+  notes?: string;
 }
 
-export interface Zone {
-  id: string;
-  name: string;
-  best_conditions: BestConditions;
-  bad_conditions?: BestConditions;
+export interface BadConditions {
+  swell_direction?: string[];
+  wind_direction?: string[];
+  notes?: string;
 }
 
 export interface Spot {
   place_id: string;
-  lat: string;
-  lon: string;
+  location: string;
   display_name: string;
   zona: string;
-  zona_id: number;
-  zone?: Zone;
+  best_conditions: BestConditions;
+  bad_conditions?: BadConditions;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface WeatherData {
@@ -47,4 +49,16 @@ export interface Report {
   user_preferences?: string;
   created_at: Date;
   updated_at: Date;
+}
+
+/////////// USer
+
+export interface IUser {
+  id?: number;
+  username: string;
+  email: string;
+  password: string;
+  phone?: string;
+  created_at?: Date;
+  updated_at?: Date;
 }

@@ -1,4 +1,5 @@
 node_modules
+dist
 .env
 CLAUDE.md
 FIX-FETCH-FAILED.md

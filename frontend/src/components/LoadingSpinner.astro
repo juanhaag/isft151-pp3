@@ -1,0 +1,80 @@
+---
+import { Waves } from 'lucide-astro';
+---
+
+<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden" id="loading-overlay">
+  <div class="bg-white rounded-2xl p-8 text-center space-y-6 max-w-md mx-4">
+    <div class="flex justify-center">
+      <Waves class="h-12 w-12 text-blue-600 animate-pulse" />
+    </div>
+
+    <div class="space-y-2">
+      <h3 class="text-xl font-semibold text-gray-900">Generando tu reporte</h3>
+      <p class="text-gray-600">
+        Analizando condiciones meteorológicas con IA...
+      </p>
+    </div>
+
+    <div class="w-full bg-gray-200 rounded-full h-2">
+      <div class="bg-gradient-to-r from-blue-600 to-cyan-600 h-2 rounded-full animate-pulse" style="width: 70%"></div>
+    </div>
+
+    <p class="text-sm text-gray-500">
+      Esto puede tomar unos segundos
+    </p>
+  </div>
+</div>
+
+<div class="space-y-4 animate-pulse hidden" id="skeleton-loader">
+  <div class="bg-white rounded-lg p-6 space-y-4">
+    <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+    <div class="space-y-2">
+      <div class="h-3 bg-gray-200 rounded"></div>
+      <div class="h-3 bg-gray-200 rounded w-5/6"></div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg p-6 space-y-4">
+    <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+    <div class="grid grid-cols-2 gap-4">
+      <div class="h-20 bg-gray-200 rounded"></div>
+      <div class="h-20 bg-gray-200 rounded"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showLoading() {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) {
+      overlay.classList.remove('hidden');
+    }
+  }
+
+  function hideLoading() {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) {
+      overlay.classList.add('hidden');
+    }
+  }
+
+  function showSkeleton() {
+    const skeleton = document.getElementById('skeleton-loader');
+    if (skeleton) {
+      skeleton.classList.remove('hidden');
+    }
+  }
+
+  function hideSkeleton() {
+    const skeleton = document.getElementById('skeleton-loader');
+    if (skeleton) {
+      skeleton.classList.add('hidden');
+    }
+  }
+
+  // Make functions available globally
+  (window as any).showLoading = showLoading;
+  (window as any).hideLoading = hideLoading;
+  (window as any).showSkeleton = showSkeleton;
+  (window as any).hideSkeleton = hideSkeleton;
+</script>

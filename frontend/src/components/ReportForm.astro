@@ -1,0 +1,401 @@
+---
+import DatePicker from './DatePicker.astro';
+import LocationSearch from './LocationSearch.astro';
+import RatingFeedback from './RatingFeedback.astro';
+import { BarChart3 } from 'lucide-astro';
+---
+
+<section id="reportes" class="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-12">
+      <div class="flex items-center justify-center space-x-3 mb-4">
+        <BarChart3 class="h-10 w-10 text-blue-600" />
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-900">
+          Genera tu Reporte
+        </h2>
+      </div>
+      <p class="text-xl text-gray-600">
+        Completa los datos para obtener un reporte personalizado de condiciones de surf
+      </p>
+    </div>
+
+    <div class="bg-gray-50 rounded-2xl p-8">
+      <form id="surf-report-form" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <LocationSearch />
+          <DatePicker />
+        </div>
+
+        <div class="flex justify-center pt-6">
+          <button
+            type="submit"
+            class="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold py-4 px-8 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg"
+          >
+            Generar Reporte de Surf
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div id="report-results" class="mt-12 hidden">
+      <div class="bg-white rounded-2xl shadow-lg p-8">
+        <h3 class="text-2xl font-bold text-gray-900 mb-6">Reporte de Surf</h3>
+        <div id="report-content" class="space-y-6">
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden template for rating feedback -->
+    <div class="hidden">
+      <RatingFeedback />
+    </div>
+  </div>
+</section>
+
+<script>
+  const form = document.getElementById('surf-report-form') as HTMLFormElement;
+  const resultsDiv = document.getElementById('report-results');
+  const contentDiv = document.getElementById('report-content');
+
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
+
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(form);
+      const location = formData.get('location') as string;
+      const date = formData.get('date') as string;
+      console.log('Generating report for:', { location, date });
+      if (!location || !date) {
+        alert('Por favor completa todos los campos');
+        return;
+      }
+
+      // Show loading
+      (window as any).showLoading?.();
+
+      try {
+        // Get userId from localStorage if user is logged in
+        let userId = null;
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          try {
+            const user = JSON.parse(userStr);
+            userId = user.id;
+          } catch (e) {
+            console.warn('Failed to parse user from localStorage');
+          }
+        }
+
+        // Llamar al endpoint real del backend
+        const response = await fetch(`${API_URL}/api/reports/generate`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            spotId: location, // ID del spot seleccionado desde LocationSearch
+            targetDate: date,
+            forecastDays: 1,
+            userId: userId // Include userId if user is logged in
+          })
+        })
+
+        const result = await response.json();
+
+        (window as any).hideLoading?.();
+
+        if (!result.success) {
+          alert(`Error: ${result.error || 'No se pudo generar el reporte'}`);
+          return;
+        }
+
+        const data = result.data;
+        const reportId = data.report_id || data.id; // Guardar el reportId para el feedback
+        const ai = data.ai_analysis || {};
+
+        if (resultsDiv && contentDiv) {
+          // Generar las estrellas de rating
+          const stars = '⭐'.repeat(data.rating || 3);
+          const ratingLabels = ['Muy Malo', 'Malo', 'Regular', 'Bueno', 'Excelente'];
+          const ratingText = ratingLabels[(data.rating || 3) - 1] || 'Regular';
+
+          // Calcular el rango de fechas del análisis (7 días desde hoy/fecha actual)
+          const selectedDate = new Date(date);
+          const startDate = new Date(); // Fecha actual desde donde inicia el análisis
+          const endDate = new Date(startDate);
+          endDate.setDate(endDate.getDate() + 6); // 7 días total (día actual + 6)
+          const dateRange = `${startDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} - ${endDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+
+          contentDiv.innerHTML = `
+            <!-- Header con rango de análisis -->
+            <div class="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl p-6 text-white mb-6">
+              <div class="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                  <h3 class="text-2xl font-bold mb-1">📊 Análisis de Surf</h3>
+                  <p class="text-blue-100"><strong>Ubicación:</strong> ${data.location || location}</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm text-blue-100 mb-1">Rango de análisis (7 días)</p>
+                  <p class="text-lg font-semibold">📅 ${dateRange}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mejor día recomendado -->
+            ${ai.best_day ? `
+            <div class="bg-gradient-to-r from-green-500 to-teal-500 rounded-xl p-6 text-white mb-6 border-4 border-green-300">
+              <div class="flex items-start space-x-4">
+                <div class="text-4xl">🏆</div>
+                <div class="flex-1">
+                  <h4 class="text-xl font-bold mb-2">Mejor Día para Surfear</h4>
+                  <p class="text-2xl font-bold mb-2">${ai.best_day}</p>
+                  <p class="text-green-50">${ai.summary || 'Condiciones óptimas detectadas en el análisis'}</p>
+                </div>
+              </div>
+            </div>
+            ` : ''}
+
+            <!-- Separador -->
+            <div class="border-t-2 border-gray-200 my-6"></div>
+            <h3 class="text-xl font-bold text-gray-900 mb-4">📍 Condiciones para el día ${selectedDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</h3>
+
+            <!-- Condiciones del día seleccionado -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div class="bg-blue-50 rounded-lg p-6 border-2 border-blue-200">
+                <h4 class="font-semibold text-blue-900 mb-3 flex items-center">
+                  <span class="text-xl mr-2">📊</span> Resumen General
+                </h4>
+                <div class="space-y-2 text-sm">
+                  <p><strong>Fecha consultada:</strong> ${selectedDate.toLocaleDateString('es-ES')}</p>
+                  <p><strong>Calificación:</strong> ${stars} <span class="text-lg font-semibold">(${ratingText})</span></p>
+                </div>
+              </div>
+
+              <div class="bg-green-50 rounded-lg p-6 border-2 border-green-200">
+                <h4 class="font-semibold text-green-900 mb-3 flex items-center">
+                  <span class="text-xl mr-2">🌊</span> Oleaje
+                </h4>
+                <div class="space-y-2 text-sm">
+                  <p><strong>Altura:</strong> ${data.wave_conditions?.height || 'N/A'}</p>
+                  <p><strong>Período:</strong> ${data.wave_conditions?.period || 'N/A'}</p>
+                  <p><strong>Dirección:</strong> ${data.wave_conditions?.direction || 'N/A'}</p>
+                </div>
+              </div>
+
+              <div class="bg-yellow-50 rounded-lg p-6 border-2 border-yellow-200">
+                <h4 class="font-semibold text-yellow-900 mb-3 flex items-center">
+                  <span class="text-xl mr-2">💨</span> Viento
+                </h4>
+                <div class="space-y-2 text-sm">
+                  <p><strong>Velocidad:</strong> ${data.wind_conditions?.speed || 'N/A'}</p>
+                  <p><strong>Dirección:</strong> ${data.wind_conditions?.direction || 'N/A'}</p>
+                  <p><strong>Condición:</strong> ${data.wind_conditions?.condition || 'N/A'}</p>
+                </div>
+              </div>
+
+              <div class="bg-purple-50 rounded-lg p-6 border-2 border-purple-200">
+                <h4 class="font-semibold text-purple-900 mb-3 flex items-center">
+                  <span class="text-xl mr-2">🌙</span> Marea
+                </h4>
+                <div class="space-y-2 text-sm">
+                  <p><strong>Pleamar:</strong> ${data.tide_conditions?.high_tide || 'N/A'}</p>
+                  <p><strong>Bajamar:</strong> ${data.tide_conditions?.low_tide || 'N/A'}</p>
+                  <p><strong>Mejor horario:</strong> ${data.tide_conditions?.best_time || 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+
+            ${ai.morning && ai.afternoon ? `
+            <!-- Análisis por franjas horarias -->
+            <div class="bg-gray-100 rounded-xl p-6 mb-6">
+              <h4 class="text-lg font-bold text-gray-900 mb-4">⏰ Análisis por Horario del Día</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-lg p-6 border-2 border-orange-200">
+                  <h5 class="font-semibold text-orange-900 mb-3">🌅 Mañana (6:00 - 12:00)</h5>
+                  <div class="space-y-2 text-sm">
+                    <p><strong>Altura de olas:</strong> ${ai.morning.wave_height}</p>
+                    <p><strong>Dirección del swell:</strong> ${ai.morning.swell_direction}</p>
+                    <p><strong>Viento:</strong> ${ai.morning.wind_speed} (${ai.morning.wind_direction})</p>
+                    <p><strong>Condiciones:</strong> ${ai.morning.conditions}</p>
+                    <p class="text-gray-700 mt-3 pt-3 border-t border-orange-200 italic">${ai.morning.explanation}</p>
+                  </div>
+                </div>
+
+                <div class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-6 border-2 border-blue-200">
+                  <h5 class="font-semibold text-blue-900 mb-3">🌆 Tarde (12:00 - 18:00)</h5>
+                  <div class="space-y-2 text-sm">
+                    <p><strong>Altura de olas:</strong> ${ai.afternoon.wave_height}</p>
+                    <p><strong>Dirección del swell:</strong> ${ai.afternoon.swell_direction}</p>
+                    <p><strong>Viento:</strong> ${ai.afternoon.wind_speed} (${ai.afternoon.wind_direction})</p>
+                    <p><strong>Condiciones:</strong> ${ai.afternoon.conditions}</p>
+                    <p class="text-gray-700 mt-3 pt-3 border-t border-blue-200 italic">${ai.afternoon.explanation}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            ` : ''}
+
+            ${ai.best_time ? `
+            <div class="bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg p-6 text-white mb-6">
+              <h4 class="font-semibold mb-2 flex items-center">
+                <span class="text-2xl mr-2">⏰</span>
+                <span>Mejor horario del día: ${ai.best_time}</span>
+              </h4>
+              <p class="ml-8">${ai.best_time_reason || 'Condiciones óptimas para surfear'}</p>
+            </div>
+            ` : ''}
+          `;
+
+          // Add rating feedback component
+          contentDiv.innerHTML += `
+            <div class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-6 mt-6" id="rating-feedback-result">
+              <div class="flex items-center space-x-3 mb-4">
+                <svg class="h-6 w-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                </svg>
+                <h4 class="text-lg font-semibold text-gray-900">¿Qué te pareció este reporte?</h4>
+              </div>
+              <form class="space-y-4" onsubmit="submitFeedback(event, '${reportId}')" data-report-id="${reportId}">
+                <div class="space-y-2">
+                  <label class="block text-sm font-medium text-gray-700">Calificación</label>
+                  <div class="flex space-x-1" id="star-rating-result">
+                    ${[1,2,3,4,5].map(rating => `
+                      <button type="button" onclick="setRating(${rating})" class="star-btn-result" data-rating="${rating}">
+                        <svg class="h-6 w-6 text-gray-300 hover:text-yellow-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                        </svg>
+                      </button>
+                    `).join('')}
+                  </div>
+                  <input type="hidden" id="rating-value-result" name="rating" value="0" />
+                </div>
+                <div class="space-y-2">
+                  <label for="feedback-comment-result" class="block text-sm font-medium text-gray-700">
+                    Comentarios (opcional)
+                  </label>
+                  <textarea
+                    id="feedback-comment-result"
+                    name="comment"
+                    rows="3"
+                    placeholder="Cuéntanos qué te pareció el reporte y cómo podemos mejorarlo..."
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                  ></textarea>
+                </div>
+                <div class="flex justify-end">
+                  <button
+                    type="submit"
+                    class="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors"
+                  >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
+                    <span>Enviar Feedback</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          `;
+
+          resultsDiv.classList.remove('hidden');
+          resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+      } catch (error) {
+        (window as any).hideLoading?.();
+        console.error('Error al generar reporte:', error);
+        alert('Error al conectar con el servidor. Por favor intenta nuevamente.');
+      }
+    });
+  }
+
+  // Global functions for rating feedback
+  let currentResultRating = 0;
+
+  function setRating(rating) {
+    currentResultRating = rating;
+    const ratingInput = document.getElementById('rating-value-result');
+    if (ratingInput) {
+      ratingInput.value = rating.toString();
+    }
+    updateResultStars();
+  }
+
+  function updateResultStars() {
+    const starButtons = document.querySelectorAll('.star-btn-result');
+    starButtons.forEach((button, index) => {
+      const star = button.querySelector('svg');
+      if (star) {
+        if (index < currentResultRating) {
+          star.classList.remove('text-gray-300');
+          star.classList.add('text-yellow-400');
+          star.innerHTML = '<path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>';
+        } else {
+          star.classList.remove('text-yellow-400');
+          star.classList.add('text-gray-300');
+          star.innerHTML = '<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>';
+        }
+      }
+    });
+  }
+
+  async function submitFeedback(event, reportId) {
+    event.preventDefault();
+
+    if (currentResultRating === 0) {
+      alert('Por favor selecciona una calificación');
+      return;
+    }
+
+    const comment = document.getElementById('feedback-comment-result')?.value || '';
+
+    console.log('📤 Enviando feedback:', { reportId, rating: currentResultRating, comment });
+
+    try {
+      const url = `${API_URL}/api/reports/${reportId}/feedback`;
+      console.log('📤 URL:', url);
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          rating: currentResultRating,
+          comment: comment || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error al enviar feedback');
+      }
+
+      const result = await response.json();
+      console.log('✅ Feedback enviado:', result);
+
+      // Mostrar mensaje de éxito
+      const feedbackDiv = document.getElementById('rating-feedback-result');
+      if (feedbackDiv) {
+        feedbackDiv.innerHTML = `
+          <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">
+            <div class="flex items-center space-x-2">
+              <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+              </svg>
+              <span class="font-medium">¡Gracias por tu feedback!</span>
+            </div>
+            <p class="mt-1 text-sm">Tu calificación de ${currentResultRating} estrellas y comentarios nos ayudan a mejorar nuestros reportes.</p>
+          </div>
+        `;
+      }
+    } catch (error) {
+      console.error('❌ Error al enviar feedback:', error);
+      alert('Hubo un error al enviar tu feedback. Por favor intenta de nuevo.');
+    }
+  }
+
+  // Make functions global
+  window.setRating = setRating;
+  window.submitFeedback = submitFeedback;
+</script>

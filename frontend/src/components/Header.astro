@@ -1,0 +1,155 @@
+---
+import { Waves, User } from 'lucide-astro';
+---
+
+<header class="bg-white/90 backdrop-blur-sm shadow-lg sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center py-4">
+      <div class="flex items-center space-x-3">
+        <Waves class="h-8 w-8 text-blue-600" />
+        <h1 class="text-2xl font-bold text-gray-900">OlasApp</h1>
+      </div>
+
+      <nav class="hidden md:flex space-x-8">
+        <a href="#inicio" class="text-gray-700 hover:text-blue-600 transition-colors">Inicio</a>
+        <a href="#reportes" class="text-gray-700 hover:text-blue-600 transition-colors">Reportes</a>
+        <a href="#contacto" class="text-gray-700 hover:text-blue-600 transition-colors">Contacto</a>
+      </nav>
+
+      <!-- Login/Profile Button -->
+      <div id="user-menu">
+        <button id="login-button" class="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+          <User class="h-5 w-5" />
+          <span>Iniciar Sesión</span>
+        </button>
+
+        <div id="profile-menu" class="hidden relative">
+          <button id="profile-button" class="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-4 py-2 rounded-lg transition-all shadow-md">
+            <User class="h-5 w-5" />
+            <span id="username-display">Usuario</span>
+          </button>
+
+          <div id="dropdown-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
+            <a href="/profile" class="block px-4 py-2 text-gray-700 hover:bg-blue-50 transition-colors">
+              📊 Mis Reportes
+            </a>
+            <button id="logout-button" class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-colors">
+              🚪 Cerrar Sesión
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+  // Check if user is logged in and update UI
+  function updateUserMenu() {
+    console.log('🔄 Updating user menu...');
+    const userStr = localStorage.getItem('user');
+    const loginButton = document.getElementById('login-button');
+    const profileMenu = document.getElementById('profile-menu');
+    const usernameDisplay = document.getElementById('username-display');
+
+    console.log('User data:', userStr);
+
+    if (userStr && userStr !== 'undefined' && userStr !== 'null') {
+      try {
+        const user = JSON.parse(userStr);
+        console.log('✅ User logged in:', user.username);
+
+        // Hide login button, show profile menu
+        if (loginButton) {
+          loginButton.classList.add('hidden');
+          const menu = loginButton.parentElement.querySelector('#profile-menu');
+          if (menu) menu.classList.remove('hidden');
+        }
+        if (profileMenu) profileMenu.classList.remove('hidden');
+        if (usernameDisplay) usernameDisplay.textContent = user.username;
+
+        // Setup dropdown after showing profile menu
+        setTimeout(setupDropdown, 100);
+      } catch (e) {
+        console.error('Failed to parse user data:', e);
+        // Clean up corrupted data
+        localStorage.removeItem('user');
+        localStorage.removeItem('authToken');
+        if (loginButton) loginButton.classList.remove('hidden');
+        if (profileMenu) profileMenu.classList.add('hidden');
+      }
+    } else {
+      console.log('❌ No user logged in');
+      // Show login button, hide profile menu
+      if (loginButton) loginButton.classList.remove('hidden');
+      if (profileMenu) profileMenu.classList.add('hidden');
+    }
+  }
+
+  // Toggle dropdown menu
+  function setupDropdown() {
+    const profileButton = document.getElementById('profile-button');
+    const dropdownMenu = document.getElementById('dropdown-menu');
+
+    console.log('Setting up dropdown:', profileButton, dropdownMenu);
+
+    if (profileButton && dropdownMenu) {
+      // Remove old listeners by cloning
+      const newProfileButton = profileButton.cloneNode(true);
+      profileButton.parentNode.replaceChild(newProfileButton, profileButton);
+
+      newProfileButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        console.log('Toggling dropdown');
+        dropdownMenu.classList.toggle('hidden');
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', () => {
+        if (dropdownMenu) dropdownMenu.classList.add('hidden');
+      });
+
+      // Prevent dropdown from closing when clicking inside it
+      dropdownMenu.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+    }
+  }
+
+  // Logout function
+  function setupLogout() {
+    const logoutButton = document.getElementById('logout-button');
+
+    if (logoutButton) {
+      logoutButton.addEventListener('click', () => {
+        console.log('🚪 Logging out...');
+        localStorage.removeItem('user');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('token');
+        window.location.href = '/';
+      });
+    }
+  }
+
+  // Initialize immediately
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  function init() {
+    console.log('🚀 Initializing Header...');
+    updateUserMenu();
+    setupLogout();
+  }
+
+  // Listen for login events from LoginModal
+  window.addEventListener('userLoggedIn', () => {
+    console.log('🎉 userLoggedIn event received');
+    setTimeout(() => {
+      updateUserMenu();
+      setupLogout();
+    }, 100);
+  });
+</script>
