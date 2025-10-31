@@ -136,23 +136,23 @@ install_dependencies() {
 
 # Iniciar base de datos
 start_database() {
-    print_step "Iniciando contenedor de PostgreSQL..."
+    print_step "Iniciando contenedor de PostgreSQL con pgvector..."
 
     # Verificar si el contenedor ya existe
-    if docker ps -a | grep -q "olaspp_postgres"; then
+    if docker ps -a | grep -q "olaspp_postgres_vector"; then
         print_warning "El contenedor ya existe"
 
         # Verificar si está corriendo
-        if docker ps | grep -q "olaspp_postgres"; then
+        if docker ps | grep -q "olaspp_postgres_vector"; then
             print_success "El contenedor ya está corriendo"
         else
             print_step "Iniciando contenedor existente..."
-            docker-compose up -d
+            docker-compose -f ../docker-compose.vectordb.yml up -d
             print_success "Contenedor iniciado"
         fi
     else
         print_step "Creando e iniciando nuevo contenedor..."
-        docker-compose up -d
+        docker-compose -f ../docker-compose.vectordb.yml up -d
         print_success "Contenedor creado e iniciado"
     fi
 
@@ -163,11 +163,11 @@ start_database() {
 wait_for_database() {
     print_step "Esperando a que PostgreSQL esté listo..."
 
-    local max_attempts=30
+    local max_attempts=60
     local attempt=0
 
     while [ $attempt -lt $max_attempts ]; do
-        if docker exec olaspp_postgres pg_isready -U postgres &> /dev/null; then
+        if docker exec olaspp_postgres_vector pg_isready -U postgres -d olaspp &> /dev/null; then
             print_success "PostgreSQL está listo"
             echo ""
             return 0
@@ -180,6 +180,7 @@ wait_for_database() {
 
     echo ""
     print_error "Timeout esperando a PostgreSQL"
+    print_warning "Verifica los logs con: docker logs olaspp_postgres_vector"
     return 1
 }
 
@@ -200,7 +201,7 @@ run_migrations() {
 test_database_connection() {
     print_step "Probando conexión a la base de datos..."
 
-    if docker exec olaspp_postgres psql -U postgres -d olaspp -c "SELECT 1" &> /dev/null; then
+    if docker exec olaspp_postgres_vector psql -U postgres -d olaspp -c "SELECT 1" &> /dev/null; then
         print_success "Conexión exitosa a la base de datos"
     else
         print_error "No se pudo conectar a la base de datos"
@@ -220,8 +221,8 @@ show_info() {
     echo "📊 Información del Servidor:"
     echo "  • API URL: http://localhost:3000"
     echo "  • Health Check: http://localhost:3000/health"
-    echo "  • Base de Datos: PostgreSQL 16 + PostGIS"
-    echo "  • Puerto DB: 5432"
+    echo "  • Base de Datos: PostgreSQL 16 + PostGIS + pgvector"
+    echo "  • Puerto DB: 5434 (externo) -> 5432 (interno)"
     echo ""
     echo "🚀 Próximos Pasos:"
     echo "  1. Inicia el servidor: npm run dev"
@@ -229,8 +230,9 @@ show_info() {
     echo "  3. Explora los endpoints en src/routes/"
     echo ""
     echo "📚 Comandos útiles:"
-    echo "  • Ver logs de DB: docker-compose logs -f"
-    echo "  • Detener DB: npm run db:stop"
+    echo "  • Ver logs de DB: docker logs olaspp_postgres_vector -f"
+    echo "  • Detener DB: docker-compose -f ../docker-compose.vectordb.yml down"
+    echo "  • Reiniciar DB: docker-compose -f ../docker-compose.vectordb.yml restart"
     echo "  • Ver docs: cat SETUP.md"
     echo ""
 }

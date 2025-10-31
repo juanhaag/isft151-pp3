@@ -113,21 +113,21 @@ echo [OK] Docker está corriendo
 echo.
 
 REM Iniciar base de datos
-echo [*] Iniciando contenedor de PostgreSQL...
-docker ps -a | findstr "olaspp_postgres" >nul 2>&1
+echo [*] Iniciando contenedor de PostgreSQL con pgvector...
+docker ps -a | findstr "olaspp_postgres_vector" >nul 2>&1
 if %ERRORLEVEL% equ 0 (
     echo [!] El contenedor ya existe
-    docker ps | findstr "olaspp_postgres" >nul 2>&1
+    docker ps | findstr "olaspp_postgres_vector" >nul 2>&1
     if %ERRORLEVEL% equ 0 (
         echo [OK] El contenedor ya está corriendo
     ) else (
         echo [*] Iniciando contenedor existente...
-        docker-compose up -d
+        docker-compose -f ..\docker-compose.vectordb.yml up -d
         echo [OK] Contenedor iniciado
     )
 ) else (
     echo [*] Creando e iniciando nuevo contenedor...
-    docker-compose up -d
+    docker-compose -f ..\docker-compose.vectordb.yml up -d
     if %ERRORLEVEL% neq 0 (
         echo [X] Error al iniciar contenedor
         pause
@@ -140,17 +140,18 @@ echo.
 REM Esperar a que PostgreSQL esté listo
 echo [*] Esperando a que PostgreSQL esté listo...
 set /a attempts=0
-set /a max_attempts=30
+set /a max_attempts=60
 
 :wait_loop
 if %attempts% geq %max_attempts% (
     echo.
     echo [X] Timeout esperando a PostgreSQL
+    echo [!] Verifica los logs con: docker logs olaspp_postgres_vector
     pause
     exit /b 1
 )
 
-docker exec olaspp_postgres pg_isready -U postgres >nul 2>&1
+docker exec olaspp_postgres_vector pg_isready -U postgres -d olaspp >nul 2>&1
 if %ERRORLEVEL% equ 0 (
     echo [OK] PostgreSQL está listo
     goto :postgres_ready
@@ -166,7 +167,7 @@ echo.
 
 REM Probar conexión
 echo [*] Probando conexión a la base de datos...
-docker exec olaspp_postgres psql -U postgres -d olaspp -c "SELECT 1" >nul 2>&1
+docker exec olaspp_postgres_vector psql -U postgres -d olaspp -c "SELECT 1" >nul 2>&1
 if %ERRORLEVEL% neq 0 (
     echo [X] No se pudo conectar a la base de datos
     pause
@@ -194,8 +195,8 @@ echo.
 echo 📊 Información del Servidor:
 echo   • API URL: http://localhost:3000
 echo   • Health Check: http://localhost:3000/health
-echo   • Base de Datos: PostgreSQL 16 + PostGIS
-echo   • Puerto DB: 5432
+echo   • Base de Datos: PostgreSQL 16 + PostGIS + pgvector
+echo   • Puerto DB: 5434 (externo) -> 5432 (interno)
 echo.
 echo 🚀 Próximos Pasos:
 echo   1. Inicia el servidor: npm run dev
@@ -203,8 +204,9 @@ echo   2. Prueba el health check en: http://localhost:3000/health
 echo   3. Explora los endpoints en src/routes/
 echo.
 echo 📚 Comandos útiles:
-echo   • Ver logs de DB: docker-compose logs -f
-echo   • Detener DB: npm run db:stop
+echo   • Ver logs de DB: docker logs olaspp_postgres_vector -f
+echo   • Detener DB: docker-compose -f ..\docker-compose.vectordb.yml down
+echo   • Reiniciar DB: docker-compose -f ..\docker-compose.vectordb.yml restart
 echo   • Ver docs: type SETUP.md
 echo.
 
