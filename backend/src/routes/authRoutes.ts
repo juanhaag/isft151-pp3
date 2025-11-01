@@ -54,10 +54,35 @@ async function login(req: Request, res: Response) {
   }
 }
 
+/**
+ * @route   POST /api/auth/register
+ * @desc    Register a new user
+ * @access  Public
+ * @param   username - Desired username
+ * @param   email - User's email address
+ * @param   password - User's password
+ * @param   phone - User's phone number
+ * @return  Registered user details and auth token
+ */
 router.post("/register", register);
 
+/**
+ * @route   POST /api/auth/login
+ * @desc    Login a user
+ * @access  Public
+ * @param   email - User's email address
+ * @param   password - User's password
+ * @return  Auth token and user details
+ */
 router.post("/login", login);
 
+/**
+ * @route   POST /api/auth/logout
+ * @desc    Logout a user
+ * @access  Public
+ * @param   N/A
+ * @return  Logout confirmation
+ */
 router.post("/logout", AuthController.logout);
 
 export default router;

@@ -14,6 +14,7 @@ async function getUserReports(req: any, res: any) {
   }
 }
 
+
 async function getReportById(req: any, res: any) {
   try {
     await profileController.getReportById(req, res);
@@ -27,6 +28,8 @@ async function getReportById(req: any, res: any) {
  * @route   GET /api/profile/:userId/reports
  * @desc    Get all reports created by a user
  * @access  Public
+ * @param   userId - ID of the user whose reports are to be fetched
+ * @return  List of reports created by the user
  */
 router.get('/:userId/reports', getUserReports);
 
@@ -34,6 +37,8 @@ router.get('/:userId/reports', getUserReports);
  * @route   GET /api/profile/reports/:reportId
  * @desc    Get a single report by ID (for sharing)
  * @access  Public
+ * @param   reportId - ID of the report to fetch
+ * @return  Report details
  */
 router.get('/reports/:reportId', getReportById);
 

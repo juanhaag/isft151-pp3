@@ -146,24 +146,132 @@ async function getTopRatedReports(req: Request, res: Response) {
   }
 }
 
-// Rutas básicas
+
+/**
+ * @route   POST /api/reports/generate
+ * @desc    Generate a surf report
+ * @access  Public
+ * @param   location - Location data for the report
+ * @return  Generated surf report
+ */
 router.post('/generate', generateReport);
+
+/** 
+ * @route   GET /api/reports/recent
+ * @desc    Get recent surf reports
+ * @access  Public
+ * @param   recent - Parameters for recent reports
+ * @return  List of recent surf reports
+ * */ 
 router.get('/recent', getRecentReports);
+
+/** 
+ * @route   GET /api/reports/stats
+ * @desc    Get report statistics
+ * @access  Public
+ * @param   stats - Parameters for report statistics
+ * @return  Report statistics
+ * */
 router.get('/stats', getReportStats);
+
+
+/**
+ * @route   GET /api/reports/good-conditions
+ * @desc    Get reports with good surf conditions
+ * @access  Public
+ * @param   conditions - Filter parameters for good conditions
+ * @return  List of reports with good conditions
+ */
+
 router.get('/good-conditions', getReportsWithGoodConditions);
+
+
+/**
+ * @route   GET /api/reports/search
+ * @desc    Search surf reports
+ * @access  Public
+ * @param   query - Search query parameters
+ * @return  List of matching surf reports
+ */
 router.get('/search', searchReports);
+
+/**
+ * @route   GET /api/reports/spot/:spotId
+ * @desc    Get reports for a specific spot
+ * @access  Public
+ * @param   spotId - ID of the spot
+ * @return  List of surf reports for the spot
+ */
 router.get('/spot/:spotId', getReportsBySpot);
+
+/**
+ * @route   GET /api/reports/:id
+ * @desc    Get a surf report by ID
+ * @access  Public
+ * @param   id - ID of the surf report
+ * @return  Surf report details
+ */
 router.get('/:id', getReport);
+
+/**
+ * @route   GET /api/reports/weather/forecast/:spotId
+ * @desc    Get weather forecast for a specific spot
+ * @access  Public 
+ * @param   spotId - ID of the spot
+ * @return  Weather forecast data for the spot
+ */
 router.get('/weather/forecast/:spotId', getWeatherForecast);
+
+/**
+ * @route   GET /api/reports/test/services
+ * @desc    Test all report services
+ * @access  Public
+ * @param   N/A  
+ * @return  Service test results
+ */
 router.get('/test/services', testServices);
 
-// Rutas de feedback
+
+/**
+ *  @route   POST /api/reports/:reportId/feedback
+ *  @desc    Submit feedback for a specific report
+ *  @access  Public
+ *  @param   reportId - ID of the report to submit feedback for
+ *  @return  Success message or error
+ */
 router.post('/:reportId/feedback', submitFeedback);
+/**
+ * @route   GET /api/reports/:reportId/feedback
+ * @desc    Get feedback for a specific report
+ * @access  Public
+ * @param   reportId - ID of the report to get feedback for
+ * @return  List of feedback entries for the report//  */
 router.get('/:reportId/feedback', getReportFeedback);
+
+/**
+ * @route   GET /api/reports/:reportId/similar
+ * @desc    Get similar reports based on a specific report
+ * @access  Public
+ * @param   reportId - ID of the report to find similar reports for
+ * @return  List of similar reports*/
 router.get('/:reportId/similar', getSimilarReports);
 
-// Rutas de estadísticas de embeddings
+/**
+ * @route   GET /api/reports/embeddings/stats
+ * @desc    Get statistics about report embeddings
+ * @access  Public
+ * @param   N/A
+ * @return  Embedding statistics
+ * */  
 router.get('/embeddings/stats', getEmbeddingStats);
+
+/**
+ * @route   GET /api/reports/top-rated
+ * @desc    Get top rated surf reports  
+ * @access  Public
+ * @param   N/A
+ * @return  List of top rated surf reports
+ * */
 router.get('/top-rated', getTopRatedReports);
 
 export default router;

@@ -44,9 +44,41 @@ async function createSpot(req: Request, res: Response) {
   }
 }
 
+/** 
+ * @route   GET /api/spots/
+ * @desc    Get all spots
+ * @access  Public
+ * @param   N/A
+ * @return  List of all surf spots
+ * 
+ */
 router.get('/', getAllSpots);
+
+/** 
+ * @route   GET /api/spots/zona/:zona
+ * @desc    Get spots by zona
+ * @access  Public
+ * @param   zona - Zona to filter spots
+ * @return  List of surf spots in the specified zona
+ */
 router.get('/zona/:zona', getSpotsByZona);
+
+/** 
+ * @route   GET /api/spots/:id
+ * @desc    Get spot by ID
+ * @access  Public
+ * @param   id - ID of the spot
+ * @return  Spot details
+ */
 router.get('/:id', getSpotById);
+
+/** 
+ * @route   POST /api/spots/
+ * @desc    Create a new spot
+ * @access  Public
+ * @param   Spot data in request body
+ * @return  Created spot details
+ */
 router.post('/', createSpot);
 
 export default router;
