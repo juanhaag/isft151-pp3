@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env' });
+
 import { AppDataSource } from '../config/database';
 
 async function runMigrations() {

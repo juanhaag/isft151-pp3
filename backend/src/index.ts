@@ -1,13 +1,13 @@
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env' });
+
   import 'reflect-metadata';
   import express from 'express';
   import cors from 'cors';
-  import dotenv from 'dotenv';
   import { initializeDatabase } from './config/database';
   import routes from './routes';
   import { jsonOnlyMiddleware } from './middlewares/jsonOnly';
 
-
-  dotenv.config();
 
   const app = express();
   const PORT = process.env.PORT || 3000;

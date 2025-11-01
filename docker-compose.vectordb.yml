@@ -2,22 +2,23 @@ version: '3.8'
 
 services:
   olaspp_postgres_vector:
-    image: postgis/postgis:16-3.4
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: olaspp_postgres_vector
     platform: linux/amd64
     restart: always
     ports:
-      - "5434:5432"  # Puerto externo:interno
+      - "5434:5432"
     environment:
       - TZ=America/Argentina/Buenos_Aires
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=olaspp_password
-      - POSTGRES_DB=olaspp
+      - POSTGRES_DB=surfdb
     volumes:
       - olaspp_pgdata:/var/lib/postgresql/data
-      - ./src/database/migrations_vectorization.sql:/docker-entrypoint-initdb.d/01-vectorization.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d olaspp"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d surfdb"]
       interval: 10s
       timeout: 5s
       retries: 5

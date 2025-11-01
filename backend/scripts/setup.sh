@@ -87,16 +87,16 @@ check_requirements() {
     echo ""
 }
 
-# Verificar archivo .env
+# Verificar archivo .env y cargar variables
 check_env_file() {
     print_step "Verificando archivo de configuración .env..."
 
-    if [ ! -f ".env" ]; then
+    if [ ! -f "../.env" ]; then
         print_warning "Archivo .env no encontrado"
 
-        if [ -f ".env.example" ]; then
+        if [ -f "../.env.example" ]; then
             print_step "Creando .env desde .env.example..."
-            cp .env.example .env
+            cp ../.env.example ../.env
             print_success "Archivo .env creado"
         else
             print_error ".env.example no encontrado. No se puede crear .env"
@@ -106,13 +106,19 @@ check_env_file() {
         print_success "Archivo .env encontrado"
     fi
 
-    # Verificar y corregir configuración de base de datos
-    print_step "Verificando configuración de base de datos..."
-    sed -i 's/DB_PORT=5432/DB_PORT=5434/g' .env
-    sed -i 's/DB_NAME=surfdb/DB_NAME=olaspp/g' .env
-    sed -i 's/DB_DATABASE=.*/DB_NAME=olaspp/g' .env
-    sed -i 's|DATABASE_URL=postgresql://[^@]*@[^:]*:[0-9]*/[^[:space:]]*|DATABASE_URL=postgresql://postgres:olaspp_password@localhost:5434/olaspp|g' .env
-    print_success "Configuración actualizada (puerto 5434, base de datos olaspp)"
+    # Cargar variables de entorno desde .env
+    print_step "Cargando variables de entorno desde .env..."
+    set -a
+    source ../.env
+    set +a
+    print_success "Variables de entorno cargadas"
+    
+    # Verificar y corregir puerto de DB si es necesario
+    if grep -q "DB_PORT=5432" ../.env; then
+      sed -i 's/DB_PORT=5432/DB_PORT=5434/g' ../.env
+      export DB_PORT=5434 # Exportar el cambio para la sesión actual
+      print_success "Puerto de base de datos actualizado a 5434 en .env"
+    fi
 
     echo ""
 }
@@ -129,11 +135,9 @@ install_dependencies() {
 start_database() {
     print_step "Iniciando contenedor de PostgreSQL con pgvector..."
 
-    # Verificar si el contenedor ya existe
     if docker ps -a | grep -q "olaspp_postgres_vector"; then
         print_warning "El contenedor ya existe"
 
-        # Verificar si está corriendo
         if docker ps | grep -q "olaspp_postgres_vector"; then
             print_success "El contenedor ya está corriendo"
         else
@@ -158,7 +162,7 @@ wait_for_database() {
     local attempt=0
 
     while [ $attempt -lt $max_attempts ]; do
-        if docker exec olaspp_postgres_vector pg_isready -U postgres -d olaspp &> /dev/null; then
+        if docker exec olaspp_postgres_vector pg_isready -U $DB_USERNAME -d $DB_NAME &> /dev/null; then
             print_success "PostgreSQL está listo"
             echo ""
             return 0
@@ -192,7 +196,7 @@ run_migrations() {
 test_database_connection() {
     print_step "Probando conexión a la base de datos..."
 
-    if docker exec olaspp_postgres_vector psql -U postgres -d olaspp -c "SELECT 1" &> /dev/null; then
+    if docker exec -e PGPASSWORD=$DB_PASSWORD olaspp_postgres_vector psql -U $DB_USERNAME -d $DB_NAME -c "SELECT 1" &> /dev/null; then
         print_success "Conexión exitosa a la base de datos"
     else
         print_error "No se pudo conectar a la base de datos"
@@ -206,7 +210,7 @@ test_database_connection() {
 install_pgvector() {
     print_step "Instalando extensión pgvector..."
 
-    if docker exec olaspp_postgres_vector psql -U postgres -d olaspp -c "CREATE EXTENSION IF NOT EXISTS vector;" &> /dev/null; then
+    if docker exec -e PGPASSWORD=$DB_PASSWORD olaspp_postgres_vector psql -U $DB_USERNAME -d $DB_NAME -c "CREATE EXTENSION IF NOT EXISTS vector;" &> /dev/null; then
         print_success "Extensión pgvector instalada"
     else
         print_warning "pgvector no está disponible"
@@ -224,14 +228,16 @@ show_info() {
     echo -e "${GREEN}════════════════════════════════════════${NC}"
     echo ""
     echo "📊 Información del Servidor:"
-    echo "  • API URL: http://localhost:3000"
-    echo "  • Health Check: http://localhost:3000/health"
+    echo "  • API URL: http://localhost:${PORT:-3000}"
+    echo "  • Health Check: http://localhost:${PORT:-3000}/health"
     echo "  • Base de Datos: PostgreSQL 16 + PostGIS + pgvector"
-    echo "  • Puerto DB: 5434 (externo) -> 5432 (interno)"
+    echo "  • DB Host: ${DB_HOST}"
+    echo "  • DB Name: ${DB_NAME}"
+    echo "  • DB Port: ${DB_PORT} (externo) -> 5432 (interno)"
     echo ""
     echo "🚀 Próximos Pasos:"
     echo "  1. Inicia el servidor: npm run dev"
-    echo "  2. Prueba el health check: curl http://localhost:3000/health"
+    echo "  2. Prueba el health check: curl http://localhost:${PORT:-3000}/health"
     echo "  3. Explora los endpoints en src/routes/"
     echo ""
     echo "📚 Comandos útiles:"
