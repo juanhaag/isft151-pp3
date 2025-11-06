@@ -15,6 +15,16 @@ Sistema completo de generación y gestión de reportes de surf utilizando IA, da
 #### 1️⃣ Backend
 
 ```bash
+cd release
+./start-back.sh
+./start-frontend.sh
+
+Si no funciona continuar con el siguiente paso.
+```
+
+```bash
+
+
 cd backend
 
 # Configurar variables de entorno
@@ -23,6 +33,8 @@ cp .env.example .env
 
 # Ejecutar setup automático
 npm run setup
+
+
 ```
 
 El script de setup automáticamente:
@@ -33,7 +45,7 @@ El script de setup automáticamente:
 
 **[Ver guía completa de backend](backend/SETUP.md)**
 
-#### 2️⃣ Frontend
+#### 2️⃣ Frontend (Si no funciona el script de release)
 
 ```bash
 cd frontend
@@ -65,9 +77,9 @@ olaspp3/
 │   │   ├── repositories/   # Acceso a datos
 │   │   ├── routes/         # Rutas de Express
 │   │   ├── migrations/     # Migraciones TypeORM
-│   │   └── strategy/       # Providers de IA (Gemini, Ollama)
+│   │   └── strategy/       # Providers de IA (Gemini, 
 │   ├── scripts/
-│   │   └── setup.sh        # Script de instalación automática
+│   │   └── setup.sh        # Script de instalación 
 │   ├── docker-compose.yml  # PostgreSQL + PostGIS
 │   ├── SETUP.md           # Guía detallada
 │   └── package.json
@@ -132,7 +144,7 @@ olaspp3/
 - **Astro** - Framework web moderno
 - **TypeScript**
 - **Tailwind CSS** - Estilos
-- **Lucide Icons** - Iconografía
+- **Lucide Icons** - ICons
 
 ---
 
@@ -229,15 +241,6 @@ PUBLIC_API_URL=http://localhost:3000
 
 ---
 
-## 🤝 Contribuir
-
-1. Fork el proyecto
-2. Crea una rama: `git checkout -b feature/nueva-funcionalidad`
-3. Commit cambios: `git commit -m 'Agregar nueva funcionalidad'`
-4. Push: `git push origin feature/nueva-funcionalidad`
-5. Abre un Pull Request
-
----
 
 ## 📝 Notas Importantes
 
@@ -291,21 +294,12 @@ npm run migration:revert
 npm run migration:run
 ```
 
----
 
-## 📞 Soporte
-
-Para problemas o preguntas:
-1. Revisa la [guía de backend](backend/SETUP.md)
-2. Verifica los logs: `docker-compose logs -f`
-3. Consulta la documentación de cada tecnología
-
----
 
 ## 📄 Licencia
 
-Este proyecto es parte de un trabajo práctico universitario.
+Este proyecto es parte de un trabajo práctico para el ISFT 151.
 
 ---
 
-¡Disfruta generando reportes de surf con IA! 🏄‍♂️🌊
+ 🏄‍♂️🌊

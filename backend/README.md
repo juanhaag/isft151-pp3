@@ -137,21 +137,7 @@ curl -X POST http://localhost:3000/api/reports/generate \
   }'
 ```
 
-### Crear Nueva Zona
 
-```bash
-curl -X POST http://localhost:3000/api/zones \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Costa Norte",
-    "best_conditions": {
-      "swell_direction": ["N", "NE", "E"],
-      "wind_direction": ["S", "SW", "W"],
-      "tide": ["Mid to High"],
-      "swell_size": "1.5m+"
-    }
-  }'
-```
 
 ### Crear Nuevo Spot
 
@@ -170,26 +156,7 @@ curl -X POST http://localhost:3000/api/spots \
 
 ## Estructura de Datos (TypeORM Entities)
 
-### Zone Entity
-```typescript
-@Entity('zones')
-export class Zone {
-  @PrimaryGeneratedColumn()
-  id: number;
 
-  @Column({ type: 'varchar', length: 255 })
-  name: string;
-
-  @Column({ type: 'jsonb' })
-  best_conditions: BestConditions;
-
-  @Column({ type: 'jsonb', nullable: true })
-  bad_conditions?: BestConditions;
-
-  @OneToMany(() => Spot, spot => spot.zone)
-  spots: Spot[];
-}
-```
 
 ### Spot Entity
 ```typescript
